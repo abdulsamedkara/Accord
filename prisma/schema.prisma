@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// User Model
+// ═══════════════════════════════════════════════════════════════
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  email     String?  @unique
+  password  String
+  avatar    String?
+  status    UserStatus @default(OFFLINE)
+  lastSeen  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  servers     Server[]    @relation("ServerOwner")
+  memberships Member[]
+  messages    Message[]   @relation("MessageAuthor")
+  replies     Message[]   @relation("MessageReply")
+  readStates  ReadState[]
+  invites     Invite[]    @relation("InviteCreator")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Server Model
+// ═══════════════════════════════════════════════════════════════
+model Server {
+  id         String   @id @default(cuid())
+  name       String
+  icon       String?
+  inviteCode String   @unique
+  ownerId    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  owner    User      @relation("ServerOwner", fields: [ownerId], references: [id])
+  members  Member[]
+  channels Channel[]
+  invites  Invite[]
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Member Model (User <-> Server relationship)
+// ═══════════════════════════════════════════════════════════════
+model Member {
+  id       String     @id @default(cuid())
+  role     MemberRole @default(MEMBER)
+  nickname String?
+  userId   String
+  serverId String
+  joinedAt DateTime   @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serverId])
+  @@index([serverId])
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Channel Model
+// ═══════════════════════════════════════════════════════════════
+model Channel {
+  id        String      @id @default(cuid())
+  name      String
+  type      ChannelType @default(TEXT)
+  topic     String?
+  serverId  String
+  position  Int         @default(0)
+  createdAt DateTime    @default(now())
+
+  server     Server      @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  messages   Message[]
+  readStates ReadState[]
+
+  @@index([serverId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Message Model
+// ═══════════════════════════════════════════════════════════════
+model Message {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  fileUrl   String?
+  deleted   Boolean  @default(false)
+  edited    Boolean  @default(false)
+  channelId String
+  userId    String
+  replyToId String?
+  replyToUserId String?
+  mentions  String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user      User     @relation("MessageAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  replyTo   Message? @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Message[] @relation("MessageReplies")
+  replyToUser User?  @relation("MessageReply", fields: [replyToUserId], references: [id], onDelete: SetNull)
+  reactions Reaction[]
+
+  @@index([channelId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Reaction Model
+// ═══════════════════════════════════════════════════════════════
+model Reaction {
+  id        String   @id @default(cuid())
+  emoji     String
+  userId    String
+  messageId String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, messageId, emoji])
+  @@index([messageId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Invite Model
+// ═══════════════════════════════════════════════════════════════
+model Invite {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  uses      Int       @default(0)
+  maxUses   Int?
+  expiresAt DateTime?
+  serverId  String
+  creatorId String
+  createdAt DateTime  @default(now())
+
+  server  Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  creator User   @relation("InviteCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([serverId])
+  @@index([code])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ReadState Model (tracks last read message per channel per user)
+// ═══════════════════════════════════════════════════════════════
+model ReadState {
+  id            String   @id @default(cuid())
+  userId        String
+  channelId     String
+  lastMessageId String?
+  lastReadAt    DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channelId])
+  @@index([userId])
+  @@index([channelId])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Enums
+// ═══════════════════════════════════════════════════════════════
+enum MemberRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+}
+
+enum UserStatus {
+  ONLINE
+  IDLE
+  DND
+  OFFLINE
+}
+

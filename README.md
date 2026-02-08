@@ -1,36 +1,131 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎮 Accord
 
-## Getting Started
+A private Discord-like real-time communication platform.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791)
+![Redis](https://img.shields.io/badge/Redis-7-red)
+![LiveKit](https://img.shields.io/badge/LiveKit-Voice-purple)
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (required)
+- [Node.js 20+](https://nodejs.org/) (for local dev without Docker)
+
+### Option 1: Docker (Recommended)
+
+Start everything with one command:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+docker-compose up
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This starts:
+| Service | Port | Description |
+|---------|------|-------------|
+| **app** | 3000 | Next.js application |
+| **postgres** | 5432 | PostgreSQL database |
+| **redis** | 6379 | Redis cache |
+| **livekit** | 7880 | Voice/Video server |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open [http://localhost:3000](http://localhost:3000)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Option 2: Local Development
 
-## Learn More
+1. **Start infrastructure only:**
+   ```bash
+   docker-compose up postgres redis livekit -d
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Setup database:**
+   ```bash
+   npm run db:push
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Start dev server:**
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+accord/
+├── docker-compose.yml      # All services
+├── prisma/                 # Database schema
+├── server/                 # Socket.io server
+└── src/
+    ├── app/               # Next.js pages & API
+    ├── components/        # React components
+    ├── lib/               # Utilities
+    ├── realtime/          # Socket.io client
+    ├── store/             # Zustand state
+    └── types/             # TypeScript types
+```
+
+---
+
+## 🔧 Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start with Socket.io |
+| `npm run dev:next` | Start Next.js only |
+| `npm run build` | Production build |
+| `npm run db:push` | Push schema to DB |
+| `npm run db:studio` | Open Prisma Studio |
+
+---
+
+## 📦 Tech Stack
+
+- **Frontend**: Next.js 16, TypeScript, TailwindCSS, shadcn/ui, Zustand
+- **Backend**: Next.js API Routes, Socket.io
+- **Database**: PostgreSQL + Prisma ORM
+- **Cache**: Redis
+- **Voice/Video**: LiveKit + WebRTC
+
+---
+
+## 🏗️ Features
+
+### Phase 1 ✅
+- [x] User authentication (JWT)
+- [x] Server creation & management
+- [x] Text & voice channels
+- [x] Real-time messaging
+- [x] Typing indicators
+- [x] Message edit/delete
+
+### Phase 2 (Next)
+- [ ] Invite system
+- [ ] Presence (online/offline)
+- [ ] Reactions
+- [ ] Unread counts
+- [ ] Mentions (@user)
+
+### Phase 3
+- [ ] Voice channels (LiveKit)
+- [ ] Mute/unmute
+- [ ] Speaking indicators
+
+### Phase 4
+- [ ] Screen sharing
+
+---
+
+## 📄 License
+
+Private project - All rights reserved.

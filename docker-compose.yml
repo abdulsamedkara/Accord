@@ -1,0 +1,106 @@
+version: '3.8'
+
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # Next.js Application
+  # ═══════════════════════════════════════════════════════════════
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: accord-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://accord:accord_secret@postgres:5432/accord?schema=public
+      - REDIS_URL=redis://redis:6379
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
+      - LIVEKIT_URL=ws://localhost:7880
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-change-in-production}
+      - JWT_EXPIRES_IN=7d
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_SOCKET_URL=http://localhost:3000
+      - NEXT_PUBLIC_LIVEKIT_URL=ws://localhost:7880
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+    networks:
+      - accord-network
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════
+  # PostgreSQL Database
+  # ═══════════════════════════════════════════════════════════════
+  postgres:
+    image: postgres:15-alpine
+    container_name: accord-postgres
+    environment:
+      POSTGRES_USER: accord
+      POSTGRES_PASSWORD: accord_secret
+      POSTGRES_DB: accord
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U accord -d accord" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - accord-network
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════
+  # Redis Cache
+  # ═══════════════════════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: accord-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+    networks:
+      - accord-network
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════
+  # LiveKit Server (Voice & Video)
+  # ═══════════════════════════════════════════════════════════════
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: accord-livekit
+    ports:
+      - "7880:7880" # HTTP/WS
+      - "7881:7881" # RTC/UDP
+      - "7882:7882" # TURN/TCP
+    command: --dev --bind 0.0.0.0
+    networks:
+      - accord-network
+    restart: unless-stopped
+
+networks:
+  accord-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: accord-postgres-data
+  redis_data:
+    name: accord-redis-data
