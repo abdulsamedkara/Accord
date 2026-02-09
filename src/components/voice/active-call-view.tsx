@@ -4,7 +4,7 @@ import { useTracks, VideoTrack, useParticipants, useParticipantContext } from "@
 import { Track, Participant, RoomEvent, ParticipantEvent } from "livekit-client";
 import { Maximize2, Minimize2, Mic, MicOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { cn } "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export const ActiveCallView = () => {
     const screenShareTracks = useTracks([Track.Source.ScreenShare]);
