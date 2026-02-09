@@ -149,38 +149,12 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                                 isSpeaking && "scale-110 ring-4 ring-emerald-500/30 shadow-[0_0_40px_rgba(99,102,241,0.6)]"
                             )}>
                                 {/* Image or Initials */}
-                                {/* We don't have avatar url directly on Participant easily without metadata, using initials fallback */}
                                 {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
                             </div>
-
-                            {/* Volume Control (Top Left - Hover) */}
-                            {!participant.isLocal && (
-                                <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-zinc-900/80 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-50 border border-white/10 shadow-lg"
-                                    onClick={(e) => e.stopPropagation()} /* Prevent card clicks */
-                                >
-                                    <Volume2 className="w-4 h-4 text-zinc-300" />
-                                    <Slider
-                                        defaultValue={[50]}
-                                        max={100}
-                                        step={1}
-                                        value={[volume]}
-                                        onValueChange={(vals) => setVolume(vals[0])}
-                                        className="w-20 cursor-pointer"
-                                    />
-                                </div>
-                            )}
-
-                            {/* Audio Rendering for Remote Participants */}
-                            {!participant.isLocal && audioTrackRef && (
-                                <AudioTrack
-                                    trackRef={audioTrackRef}
-                                    volume={volume / 100}
-                                />
-                            )}
                         </div>
                     )}
 
-                    {/* Overlay Gradient (Top and Bottom for readability) */}
+                    {/* Overlay Gradient */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
 
                     {/* Status (Top Right) */}
@@ -191,21 +165,6 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                             </div>
                         )}
                     </div>
-
-                    {/* Volume Control (Top Left - Hover) */}
-                    {!participant.isLocal && (
-                        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-20">
-                            <Volume2 className="w-4 h-4 text-zinc-400" />
-                            <Slider
-                                defaultValue={[50]}
-                                max={100}
-                                step={1}
-                                value={[volume]}
-                                onValueChange={(vals) => setVolume(vals[0])}
-                                className="w-20 cursor-pointer"
-                            />
-                        </div>
-                    )}
 
                     {/* Audio Rendering for Remote Participants */}
                     {!participant.isLocal && audioTrackRef && (
@@ -236,85 +195,148 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                         </div>
                     </div>
 
-                    {/* "Speaking" Visualizer Effect (Optional - just a subtle highlight) */}
+                    {/* "Speaking" Visualizer Effect */}
                     {isSpeaking && (
                         <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 blur-sm" />
                     )}
                 </div>
-                );
+            </PopoverTrigger>
+
+            <PopoverContent className="w-80 bg-zinc-950/90 backdrop-blur-xl border-zinc-800 p-0 shadow-2xl rounded-xl overflow-hidden">
+                {/* Header with Avatar and Name */}
+                <div className="relative h-20 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-4 flex items-center gap-4 border-b border-white/5">
+                    <Avatar className="h-12 w-12 border-2 border-indigo-500/50 shadow-lg">
+                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${participant.name || participant.identity}`} />
+                        <AvatarFallback className="bg-indigo-600 text-white font-bold">
+                            {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                        <span className="font-bold text-white text-lg leading-tight">
+                            {participant.name || participant.identity}
+                        </span>
+                        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+                            <span className={cn("w-1.5 h-1.5 rounded-full", isSpeaking ? "bg-emerald-500 animate-pulse" : "bg-zinc-600")} />
+                            {isSpeaking ? "Speaking" : "Connected"}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Body: Controls and Status */}
+                <div className="p-4 space-y-4">
+                    {/* Status Indicators */}
+                    <div className="flex gap-2">
+                        {isMuted && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium border border-red-500/20">
+                                <MicOff className="w-3.5 h-3.5" />
+                                Muted
+                            </div>
+                        )}
+                        {isCameraOff && (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 text-zinc-400 rounded-lg text-xs font-medium border border-white/5">
+                                <Maximize2 className="w-3.5 h-3.5" />
+                                Camera Off
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Volume Control (Only for Remote) */}
+                    {!participant.isLocal && (
+                        <div className="space-y-3 pt-2 border-t border-white/5">
+                            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
+                                <span className="flex items-center gap-1.5">
+                                    <Volume2 className="w-3.5 h-3.5" />
+                                    User Volume
+                                </span>
+                                <span className="text-indigo-400 font-mono">{volume}%</span>
+                            </div>
+                            <Slider
+                                defaultValue={[50]}
+                                max={100}
+                                step={1}
+                                value={[volume]}
+                                onValueChange={(vals) => setVolume(vals[0])}
+                                className="w-full"
+                            />
+                        </div>
+                    )}
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
 };
 
 
-                // --- Screen Share View ---
+// --- Screen Share View ---
 
-                interface ScreenShareFocusViewProps {
-                    screenShareTrack: any;
-                participants: Participant[];
+interface ScreenShareFocusViewProps {
+    screenShareTrack: any;
+    participants: Participant[];
 }
 
-                const ScreenShareFocusView = ({screenShareTrack, participants}: ScreenShareFocusViewProps) => {
+const ScreenShareFocusView = ({ screenShareTrack, participants }: ScreenShareFocusViewProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
-                    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     const toggleFullscreen = () => {
         if (!containerRef.current) return;
-                    if (!document.fullscreenElement) {
-                        containerRef.current.requestFullscreen();
-                    setIsFullscreen(true);
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen();
+            setIsFullscreen(true);
         } else {
-                        document.exitFullscreen();
-                    setIsFullscreen(false);
+            document.exitFullscreen();
+            setIsFullscreen(false);
         }
     };
 
     useEffect(() => {
         const onFullscreenChange = () => {
-                        setIsFullscreen(!!document.fullscreenElement);
+            setIsFullscreen(!!document.fullscreenElement);
         };
-                    document.addEventListener("fullscreenchange", onFullscreenChange);
+        document.addEventListener("fullscreenchange", onFullscreenChange);
         return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
     }, []);
 
-                    // Filter out the local participant if we wanted, but showing everyone is fine in the bottom bar
-                    // Actually typically the person sharing screen is NOT in the bottom bar, but for now let's show everyone.
+    // Filter out the local participant if we wanted, but showing everyone is fine in the bottom bar
+    // Actually typically the person sharing screen is NOT in the bottom bar, but for now let's show everyone.
 
-                    return (
-                    <div className="flex flex-col h-full w-full bg-black">
-                        {/* Main Stage (Screen Share) */}
-                        <div
-                            ref={containerRef}
-                            className="flex-1 relative bg-zinc-950 flex items-center justify-center overflow-hidden"
-                        >
-                            {/* Dotted Background Pattern for professional feel */}
-                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                                style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-                            />
+    return (
+        <div className="flex flex-col h-full w-full bg-black">
+            {/* Main Stage (Screen Share) */}
+            <div
+                ref={containerRef}
+                className="flex-1 relative bg-zinc-950 flex items-center justify-center overflow-hidden"
+            >
+                {/* Dotted Background Pattern for professional feel */}
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                    style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+                />
 
-                            <VideoTrack
-                                trackRef={screenShareTrack}
-                                className="max-h-full max-w-full object-contain shadow-2xl"
-                            />
+                <VideoTrack
+                    trackRef={screenShareTrack}
+                    className="max-h-full max-w-full object-contain shadow-2xl"
+                />
 
-                            {/* Fullscreen Toggle */}
-                            <button
-                                onClick={toggleFullscreen}
-                                className="absolute top-6 right-6 p-2.5 bg-black/60 hover:bg-zinc-800 text-white rounded-xl backdrop-blur-md border border-white/10 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
-                            >
-                                {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-                            </button>
-                        </div>
+                {/* Fullscreen Toggle */}
+                <button
+                    onClick={toggleFullscreen}
+                    className="absolute top-6 right-6 p-2.5 bg-black/60 hover:bg-zinc-800 text-white rounded-xl backdrop-blur-md border border-white/10 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
+                >
+                    {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                </button>
+            </div>
 
-                        {/* Bottom Bar (Participants) */}
-                        <div className="h-[160px] bg-zinc-950/90 backdrop-blur-sm flex gap-3 p-4 overflow-x-auto justify-center border-t border-zinc-800/50">
-                            {participants.map((participant) => (
-                                <ParticipantTile
-                                    key={participant.identity}
-                                    participant={participant}
-                                    mini={true}
-                                    className="w-[200px]"
-                                />
-                            ))}
-                        </div>
-                    </div>
-                    );
+            {/* Bottom Bar (Participants) */}
+            <div className="h-[160px] bg-zinc-950/90 backdrop-blur-sm flex gap-3 p-4 overflow-x-auto justify-center border-t border-zinc-800/50">
+                {participants.map((participant) => (
+                    <ParticipantTile
+                        key={participant.identity}
+                        participant={participant}
+                        mini={true}
+                        className="w-[200px]"
+                    />
+                ))}
+            </div>
+        </div>
+    );
 };
