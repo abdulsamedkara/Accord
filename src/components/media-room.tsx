@@ -117,7 +117,7 @@ export const MediaRoom = ({
             serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
             token={token}
             connect={!isDisconnected}
-            video={{ resolution: VideoPresets.h1080.resolution }}
+            video={isVideoEnabled ? { resolution: VideoPresets.h1080.resolution } : false}
             audio={{ echoCancellation: true, noiseSuppression: true, autoGainControl: true }}
             onDisconnected={() => {
                 setIsDisconnected(true);

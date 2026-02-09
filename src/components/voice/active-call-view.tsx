@@ -110,7 +110,7 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                     ? "ring-2 ring-emerald-500/80 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] scale-[1.01] z-10"
                     : "hover:border-white/10 hover:bg-zinc-900/60",
                 // Size (Responsive Grid or Mini)
-                mini ? "w-[200px] aspect-video flex-shrink-0" : "w-full max-w-[560px] aspect-video",
+                mini ? "w-[200px] aspect-video flex-shrink-0" : "w-full max-w-[400px] aspect-video",
                 className
             )}
         >
@@ -132,7 +132,7 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                     )}>
                         {/* Image or Initials */}
                         {/* We don't have avatar url directly on Participant easily without metadata, using initials fallback */}
-                        {participant.identity?.substring(0, 2).toUpperCase()}
+                        {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
                     </div>
                 </div>
             )}
@@ -165,7 +165,7 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                         )} />
 
                         <span className="text-xs font-semibold truncate leading-none">
-                            {participant.identity} {participant.isLocal && "(You)"}
+                            {participant.name || participant.identity} {participant.isLocal && "(You)"}
                         </span>
                     </div>
                 </div>
