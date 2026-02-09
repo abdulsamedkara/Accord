@@ -13,7 +13,7 @@ console.log("Current Working Directory:", process.cwd());
 console.log("Directory Contents:", require("fs").readdirSync(process.cwd()));
 try {
     console.log(".next Directory Contents:", require("fs").readdirSync(require("path").join(process.cwd(), ".next")));
-} catch (e) {
+} catch (e: any) {
     console.log("Could not read .next directory:", e.message);
 }
 console.log("----------------------------------------");
