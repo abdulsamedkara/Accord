@@ -1,8 +1,7 @@
-"use client";
-
-import { useEffect, useState, useRef } from "react";
-import { LiveKitRoom, VideoConference, useLocalParticipant, RoomAudioRenderer, useRemoteParticipants, useRoomContext } from "@livekit/components-react";
-import { RoomEvent } from "livekit-client";
+import { ActiveCallView } from "@/components/voice/active-call-view";
+import { VideoPresets } from "livekit-client";
+import { LiveKitRoom, VideoConference, useLocalParticipant, RoomAudioRenderer, useRemoteParticipants, useRoomContext, ControlBar } from "@livekit/components-react";
+import { RoomEvent, VideoPresets } from "livekit-client";
 import "@livekit/components-styles";
 import { useAppStore } from "@/store";
 import { useSocket } from "@/realtime/hooks";
@@ -118,6 +117,9 @@ export const MediaRoom = ({
             serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
             token={token}
             connect={!isDisconnected}
+            video={{ resolution: VideoPresets.h1080.resolution }}
+            audio={{ echoCancellation: true, noiseSuppression: true, autoGainControl: true }}
+            screenShare={{ resolution: { width: 1920, height: 1080, frameRate: 30 } }}
             onDisconnected={() => {
                 setIsDisconnected(true);
                 if (socket) {
@@ -125,7 +127,16 @@ export const MediaRoom = ({
                 }
             }}
         >
-            <VideoConference />
+            <div className="flex flex-col h-full w-full">
+                <div className="flex-1 overflow-hidden">
+                    <ActiveCallView />
+                </div>
+                {/* Control Bar */}
+                <div className="h-[80px] flex items-center justify-center p-4 bg-zinc-950 border-t border-zinc-800">
+                    <ControlBar variation="minimal" />
+                </div>
+            </div>
+
             {/* Control Audio Output for Deafen feature */}
             {!isDeafened && <RoomAudioRenderer />}
             <MediaController chatId={chatId} />
