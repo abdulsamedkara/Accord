@@ -454,50 +454,106 @@ function ChannelSection({
                                                 </div>
                                             </div>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-72 bg-zinc-950/95 backdrop-blur-xl border-zinc-800 p-0 shadow-2xl rounded-xl overflow-hidden z-[100]" side="right" align="start">
-                                            {/* Header */}
-                                            <div className="relative h-16 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-3 flex items-center gap-3 border-b border-white/5">
-                                                <Avatar className="h-10 w-10 border border-indigo-500/50 shadow-lg">
-                                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`} />
-                                                    <AvatarFallback className="bg-indigo-600 text-white font-bold text-xs">
-                                                        {user.username.substring(0, 2).toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-white text-sm leading-tight">
-                                                        {user.username}
-                                                    </span>
-                                                    <span className="text-[10px] text-zinc-400">
-                                                        {speakingUsers[user.userId] ? "Speaking" : "Connected"}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                        <PopoverContent
+                                            className="w-80 p-0 border-0 overflow-hidden rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                                            side="right"
+                                            align="start"
+                                            sideOffset={16}
+                                        >
+                                            {/* Glassmorphic Background Container */}
+                                            <div className="relative flex flex-col bg-zinc-900/80 backdrop-blur-xl border border-white/10 h-full">
 
-                                            {/* Body */}
-                                            <div className="p-3 space-y-3">
-                                                <div className="flex gap-2">
-                                                    {user.isMuted && (
-                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/10 text-red-400 rounded text-[10px] font-medium border border-red-500/20">
-                                                            <MicOff className="w-3 h-3" /> Muted
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                {/* Animated Gradient Header */}
+                                                <div className="relative h-24 p-5 flex items-center gap-4 border-b border-white/5 overflow-hidden group">
+                                                    {/* Animated Background Mesh */}
+                                                    <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 animate-gradient-xy" />
+                                                    <div className="absolute inset-0 bg-black/40" />
 
-                                                <div className="space-y-2 pt-1 border-t border-white/5">
-                                                    <div className="flex items-center justify-between text-[10px] text-zinc-400">
-                                                        <span className="flex items-center gap-1">
-                                                            <Volume2 className="w-3 h-3" /> Volume
-                                                        </span>
-                                                        <span className="text-indigo-400 font-mono">{userVolumes?.[user.userId] ?? 50}%</span>
+                                                    {/* Avatar with Glow */}
+                                                    <div className="relative">
+                                                        <div className={cn(
+                                                            "absolute -inset-1 rounded-full blur-md opacity-50 bg-gradient-to-br from-indigo-500 to-purple-500",
+                                                            speakingUsers[user.userId] && "opacity-100 animate-pulse"
+                                                        )} />
+                                                        <Avatar className="relative h-14 w-14 border-2 border-white/10 shadow-xl">
+                                                            <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`} />
+                                                            <AvatarFallback className="bg-zinc-800 text-white font-bold text-lg">
+                                                                {user.username.substring(0, 2).toUpperCase()}
+                                                            </AvatarFallback>
+                                                        </Avatar>
                                                     </div>
-                                                    <Slider
-                                                        defaultValue={[50]}
-                                                        max={100}
-                                                        step={1}
-                                                        value={[userVolumes?.[user.userId] ?? 50]}
-                                                        onValueChange={(vals) => setUserVolume?.(user.userId, vals[0])}
-                                                        className="w-full"
-                                                    />
+
+                                                    {/* User Info */}
+                                                    <div className="relative flex flex-col z-10">
+                                                        <span className="font-bold text-white text-lg tracking-tight shadow-black drop-shadow-md">
+                                                            {user.username}
+                                                        </span>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className={cn(
+                                                                "flex h-2 w-2 rounded-full",
+                                                                speakingUsers[user.userId] ? "bg-emerald-500 shadow-[0_0_8px_#10b981]" : "bg-zinc-500"
+                                                            )} />
+                                                            <span className="text-xs font-medium text-zinc-300">
+                                                                {speakingUsers[user.userId] ? "Speaking" : "Connected"}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Controls Body */}
+                                                <div className="p-5 space-y-5 bg-gradient-to-b from-zinc-900/50 to-zinc-950/80">
+                                                    {/* Badges Row */}
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {user.isMuted && (
+                                                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 text-red-300 rounded-md text-xs font-medium border border-red-500/20 shadow-sm">
+                                                                <MicOff className="w-3.5 h-3.5" />
+                                                                <span>Muted</span>
+                                                            </div>
+                                                        )}
+                                                        {user.isDeafened && (
+                                                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-800 text-zinc-300 rounded-md text-xs font-medium border border-white/5 shadow-sm">
+                                                                <HeadphoneOff className="w-3.5 h-3.5" />
+                                                                <span>Deafened</span>
+                                                            </div>
+                                                        )}
+                                                        {user.isCameraOn && (
+                                                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-indigo-500/10 text-indigo-300 rounded-md text-xs font-medium border border-indigo-500/20 shadow-sm">
+                                                                <Video className="w-3.5 h-3.5" />
+                                                                <span>Camera On</span>
+                                                            </div>
+                                                        )}
+                                                        {!user.isMuted && !user.isDeafened && !user.isCameraOn && (
+                                                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/5 text-emerald-300 rounded-md text-xs font-medium border border-emerald-500/10 shadow-sm">
+                                                                <Mic className="w-3.5 h-3.5" />
+                                                                <span>Listening</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Volume Control */}
+                                                    <div className="space-y-3 pt-2">
+                                                        <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
+                                                            <span className="flex items-center gap-2">
+                                                                <Volume2 className="w-4 h-4 text-zinc-300" />
+                                                                User Volume
+                                                            </span>
+                                                            <span className="text-indigo-400 font-mono bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                                                                {userVolumes?.[user.userId] ?? 50}%
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Custom Slider Container to ensure visibility */}
+                                                        <div className="px-1 py-1">
+                                                            <Slider
+                                                                defaultValue={[50]}
+                                                                max={100}
+                                                                step={1}
+                                                                value={[userVolumes?.[user.userId] ?? 50]}
+                                                                onValueChange={(vals) => setUserVolume?.(user.userId, vals[0])}
+                                                                className="w-full cursor-pointer py-2" // Added padding for touch target
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </PopoverContent>
