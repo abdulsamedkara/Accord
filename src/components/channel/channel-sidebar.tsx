@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Hash, Volume2, Plus, Settings, ChevronDown, UserPlus, LogOut, Copy, Check, Mic, MicOff, Video, VideoOff, Headphones, HeadphoneOff } from "lucide-react";
+import { Hash, Volume2, Plus, Settings, ChevronDown, UserPlus, LogOut, Copy, Check, Mic, MicOff, Video, VideoOff, Headphones, HeadphoneOff, Maximize2 } from "lucide-react";
 import { Channel } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -20,6 +20,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Slider } from "@/components/ui/slider";
 
 interface ChannelSidebarProps {
     serverName: string;
@@ -232,6 +235,8 @@ export function ChannelSidebar({
                         icon={Volume2}
                         voiceStates={voiceStates}
                         speakingUsers={speakingUsers}
+                        userVolumes={useAppStore((state) => state.userVolumes)}
+                        setUserVolume={useAppStore((state) => state.setUserVolume)}
                     />
                 </div>
             </ScrollArea>
@@ -367,7 +372,9 @@ function ChannelSection({
     icon: Icon,
     voiceStates,
     speakingUsers = {},
-}: ChannelSectionProps) {
+    userVolumes,
+    setUserVolume,
+}: ChannelSectionProps & { userVolumes?: Record<string, number>, setUserVolume?: (id: string, vol: number) => void }) {
     return (
         <div className="mb-4">
             <div className="flex items-center justify-between px-1 mb-1">
@@ -414,36 +421,87 @@ function ChannelSection({
                         {voiceStates && voiceStates[channel.id] && voiceStates[channel.id].length > 0 && (
                             <div className="pl-6 pb-1 space-y-0.5 mt-1">
                                 {voiceStates[channel.id].map((user: any) => (
-                                    <div key={user.userId} className="flex items-center gap-2 group/user cursor-pointer p-1 rounded hover:bg-[hsl(var(--accent)/50)]">
-                                        <div className={cn(
-                                            "relative w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] transition-all",
-                                            user.avatar ? "" : "bg-[hsl(var(--primary))]",
-                                            speakingUsers && speakingUsers[user.userId] && "ring-2 ring-green-500 shadow-[0_0_10px_rgba(34,197,94,0.7)]"
-                                        )}>
-                                            {user.avatar ? (
-                                                <img src={user.avatar} alt={user.username} className="w-full h-full rounded-full object-cover" />
-                                            ) : (
-                                                user.username.charAt(0).toUpperCase()
-                                            )}
-                                        </div>
-                                        <span className={cn(
-                                            "text-xs font-medium text-[hsl(var(--muted-foreground))] group-hover/user:text-[hsl(var(--foreground))] truncate",
-                                            speakingUsers && speakingUsers[user.userId] && "text-[hsl(var(--foreground))]"
-                                        )}>
-                                            {user.username}
-                                        </span>
-                                        <div className="flex items-center gap-0.5 ml-auto">
-                                            {user.isMuted && (
-                                                <MicOff className="w-3 h-3 text-red-500" />
-                                            )}
-                                            {user.isDeafened && (
-                                                <HeadphoneOff className="w-3 h-3 text-red-500" />
-                                            )}
-                                            {user.isCameraOn && (
-                                                <Video className="w-3 h-3 text-[hsl(var(--primary))]" />
-                                            )}
-                                        </div>
-                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <div key={user.userId} className="flex items-center gap-2 group/user cursor-pointer p-1 rounded hover:bg-[hsl(var(--accent)/50)] relative">
+                                                <div className={cn(
+                                                    "relative w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] transition-all",
+                                                    user.avatar ? "" : "bg-[hsl(var(--primary))]",
+                                                    speakingUsers && speakingUsers[user.userId] && "ring-2 ring-green-500 shadow-[0_0_10px_rgba(34,197,94,0.7)]"
+                                                )}>
+                                                    {user.avatar ? (
+                                                        <img src={user.avatar} alt={user.username} className="w-full h-full rounded-full object-cover" />
+                                                    ) : (
+                                                        user.username.charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <span className={cn(
+                                                    "text-xs font-medium text-[hsl(var(--muted-foreground))] group-hover/user:text-[hsl(var(--foreground))] truncate",
+                                                    speakingUsers && speakingUsers[user.userId] && "text-[hsl(var(--foreground))]"
+                                                )}>
+                                                    {user.username}
+                                                </span>
+                                                <div className="flex items-center gap-0.5 ml-auto">
+                                                    {user.isMuted && (
+                                                        <MicOff className="w-3 h-3 text-red-500" />
+                                                    )}
+                                                    {user.isDeafened && (
+                                                        <HeadphoneOff className="w-3 h-3 text-red-500" />
+                                                    )}
+                                                    {user.isCameraOn && (
+                                                        <Video className="w-3 h-3 text-[hsl(var(--primary))]" />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-72 bg-zinc-950/95 backdrop-blur-xl border-zinc-800 p-0 shadow-2xl rounded-xl overflow-hidden z-[100]" side="right" align="start">
+                                            {/* Header */}
+                                            <div className="relative h-16 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-3 flex items-center gap-3 border-b border-white/5">
+                                                <Avatar className="h-10 w-10 border border-indigo-500/50 shadow-lg">
+                                                    <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user.username}`} />
+                                                    <AvatarFallback className="bg-indigo-600 text-white font-bold text-xs">
+                                                        {user.username.substring(0, 2).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-white text-sm leading-tight">
+                                                        {user.username}
+                                                    </span>
+                                                    <span className="text-[10px] text-zinc-400">
+                                                        {speakingUsers[user.userId] ? "Speaking" : "Connected"}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Body */}
+                                            <div className="p-3 space-y-3">
+                                                <div className="flex gap-2">
+                                                    {user.isMuted && (
+                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/10 text-red-400 rounded text-[10px] font-medium border border-red-500/20">
+                                                            <MicOff className="w-3 h-3" /> Muted
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-2 pt-1 border-t border-white/5">
+                                                    <div className="flex items-center justify-between text-[10px] text-zinc-400">
+                                                        <span className="flex items-center gap-1">
+                                                            <Volume2 className="w-3 h-3" /> Volume
+                                                        </span>
+                                                        <span className="text-indigo-400 font-mono">{userVolumes[user.userId] ?? 50}%</span>
+                                                    </div>
+                                                    <Slider
+                                                        defaultValue={[50]}
+                                                        max={100}
+                                                        step={1}
+                                                        value={[userVolumes[user.userId] ?? 50]}
+                                                        onValueChange={(vals) => setUserVolume(user.userId, vals[0])}
+                                                        className="w-full"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
                                 ))}
                             </div>
                         )}

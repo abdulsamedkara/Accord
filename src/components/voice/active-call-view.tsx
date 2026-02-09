@@ -4,6 +4,7 @@ import { useTracks, VideoTrack, useParticipants, useParticipantContext, AudioTra
 import { Track, Participant, RoomEvent, ParticipantEvent } from "livekit-client";
 import { Maximize2, Minimize2, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useAppStore } from "@/store";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -58,7 +59,10 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
     // Using a simple state sync for track updates
     const [videoTrackRef, setVideoTrackRef] = useState<any>(null);
     const [audioTrackRef, setAudioTrackRef] = useState<any>(null);
-    const [volume, setVolume] = useState(50); // Default volume 50%
+
+    // Global Volume State
+    const { userVolumes } = useAppStore();
+    const volume = userVolumes[participant.identity] ?? 50; // Default 50%
 
     useEffect(() => {
         const updateState = () => {
@@ -114,155 +118,90 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
     }, [participant]);
 
     return (
-        <Popover>
-            <PopoverTrigger asChild>
-                <div
-                    className={cn(
-                        "relative group overflow-hidden transition-all duration-300 cursor-pointer",
-                        // Glassmorphism Base
-                        "bg-zinc-900/40 backdrop-blur-md border border-white/5",
-                        // Shape & Shadow
-                        "rounded-2xl shadow-2xl",
-                        // Speaking Glow (Green Ring + Shadow)
+        <div
+            className={cn(
+                "relative group overflow-hidden transition-all duration-300",
+                // Glassmorphism Base
+                "bg-zinc-900/40 backdrop-blur-md border border-white/5",
+                // Shape & Shadow
+                "rounded-2xl shadow-2xl",
+                // Speaking Glow (Green Ring + Shadow)
+                isSpeaking
+                    ? "ring-2 ring-emerald-500/80 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] scale-[1.01] z-10"
+                    : "hover:border-white/10 hover:bg-zinc-900/60",
+                // Size (Responsive Grid or Mini)
+                mini ? "w-[200px] aspect-video flex-shrink-0" : "w-full max-w-[400px] aspect-video",
+                className
+            )}
+        >
+            {/* Video Layer */}
+            {!isCameraOff && videoTrackRef ? (
+                <VideoTrack
+                    trackRef={videoTrackRef}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+            ) : (
+                /* Avatar / No Video Fallback */
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/50">
+                    {/* Avatar Pulse if Speaking */}
+                    <div className={cn(
+                        "relative w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl transition-all duration-300",
+                        // Dynamic Gradient based on username length or random logic could be cool, standardizing on primary for now
+                        "bg-gradient-to-br from-indigo-500 to-purple-600",
+                        isSpeaking && "scale-110 ring-4 ring-emerald-500/30 shadow-[0_0_40px_rgba(99,102,241,0.6)]"
+                    )}>
+                        {/* Image or Initials */}
+                        {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
+                    </div>
+                </div>
+            )}
+
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
+
+            {/* Status (Top Right) */}
+            <div className="absolute top-3 right-3 flex gap-2">
+                {isMuted && (
+                    <div className="bg-red-500/90 text-white p-1.5 rounded-full shadow-lg backdrop-blur-sm">
+                        <MicOff className="w-3.5 h-3.5" />
+                    </div>
+                )}
+            </div>
+
+            {/* Audio Rendering for Remote Participants */}
+            {!participant.isLocal && audioTrackRef && (
+                <AudioTrack
+                    trackRef={audioTrackRef}
+                    volume={volume / 100}
+                />
+            )}
+
+            {/* Info Bar (Bottom Left) */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                <div className="flex items-center gap-2 max-w-full">
+                    <div className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors border max-w-full",
                         isSpeaking
-                            ? "ring-2 ring-emerald-500/80 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] scale-[1.01] z-10"
-                            : "hover:border-white/10 hover:bg-zinc-900/60",
-                        // Size (Responsive Grid or Mini)
-                        mini ? "w-[200px] aspect-video flex-shrink-0" : "w-full max-w-[400px] aspect-video",
-                        className
-                    )}
-                >
-                    {/* Video Layer */}
-                    {!isCameraOff && videoTrackRef ? (
-                        <VideoTrack
-                            trackRef={videoTrackRef}
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                    ) : (
-                        /* Avatar / No Video Fallback */
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/50">
-                            {/* Avatar Pulse if Speaking */}
-                            <div className={cn(
-                                "relative w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl transition-all duration-300",
-                                // Dynamic Gradient based on username length or random logic could be cool, standardizing on primary for now
-                                "bg-gradient-to-br from-indigo-500 to-purple-600",
-                                isSpeaking && "scale-110 ring-4 ring-emerald-500/30 shadow-[0_0_40px_rgba(99,102,241,0.6)]"
-                            )}>
-                                {/* Image or Initials */}
-                                {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
-                            </div>
-                        </div>
-                    )}
+                            ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-100"
+                            : "bg-black/40 border-white/5 text-zinc-100"
+                    )}>
+                        <div className={cn(
+                            "w-2 h-2 rounded-full transition-all duration-300",
+                            isSpeaking ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" : "bg-transparent"
+                        )} />
 
-                    {/* Overlay Gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
-
-                    {/* Status (Top Right) */}
-                    <div className="absolute top-3 right-3 flex gap-2">
-                        {isMuted && (
-                            <div className="bg-red-500/90 text-white p-1.5 rounded-full shadow-lg backdrop-blur-sm">
-                                <MicOff className="w-3.5 h-3.5" />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Audio Rendering for Remote Participants */}
-                    {!participant.isLocal && audioTrackRef && (
-                        <AudioTrack
-                            trackRef={audioTrackRef}
-                            volume={volume / 100}
-                        />
-                    )}
-
-                    {/* Info Bar (Bottom Left) */}
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2 max-w-full">
-                            <div className={cn(
-                                "flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors border max-w-full",
-                                isSpeaking
-                                    ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-100"
-                                    : "bg-black/40 border-white/5 text-zinc-100"
-                            )}>
-                                <div className={cn(
-                                    "w-2 h-2 rounded-full transition-all duration-300",
-                                    isSpeaking ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" : "bg-transparent"
-                                )} />
-
-                                <span className="text-xs font-semibold truncate leading-none">
-                                    {participant.name || participant.identity} {participant.isLocal && "(You)"}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* "Speaking" Visualizer Effect */}
-                    {isSpeaking && (
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 blur-sm" />
-                    )}
-                </div>
-            </PopoverTrigger>
-
-            <PopoverContent className="w-80 bg-zinc-950/90 backdrop-blur-xl border-zinc-800 p-0 shadow-2xl rounded-xl overflow-hidden">
-                {/* Header with Avatar and Name */}
-                <div className="relative h-20 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 p-4 flex items-center gap-4 border-b border-white/5">
-                    <Avatar className="h-12 w-12 border-2 border-indigo-500/50 shadow-lg">
-                        <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${participant.name || participant.identity}`} />
-                        <AvatarFallback className="bg-indigo-600 text-white font-bold">
-                            {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                        <span className="font-bold text-white text-lg leading-tight">
-                            {participant.name || participant.identity}
-                        </span>
-                        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-                            <span className={cn("w-1.5 h-1.5 rounded-full", isSpeaking ? "bg-emerald-500 animate-pulse" : "bg-zinc-600")} />
-                            {isSpeaking ? "Speaking" : "Connected"}
+                        <span className="text-xs font-semibold truncate leading-none">
+                            {participant.name || participant.identity} {participant.isLocal && "(You)"}
                         </span>
                     </div>
                 </div>
+            </div>
 
-                {/* Body: Controls and Status */}
-                <div className="p-4 space-y-4">
-                    {/* Status Indicators */}
-                    <div className="flex gap-2">
-                        {isMuted && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium border border-red-500/20">
-                                <MicOff className="w-3.5 h-3.5" />
-                                Muted
-                            </div>
-                        )}
-                        {isCameraOff && (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-zinc-800/50 text-zinc-400 rounded-lg text-xs font-medium border border-white/5">
-                                <Maximize2 className="w-3.5 h-3.5" />
-                                Camera Off
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Volume Control (Only for Remote) */}
-                    {!participant.isLocal && (
-                        <div className="space-y-3 pt-2 border-t border-white/5">
-                            <div className="flex items-center justify-between text-xs text-zinc-400 mb-1">
-                                <span className="flex items-center gap-1.5">
-                                    <Volume2 className="w-3.5 h-3.5" />
-                                    User Volume
-                                </span>
-                                <span className="text-indigo-400 font-mono">{volume}%</span>
-                            </div>
-                            <Slider
-                                defaultValue={[50]}
-                                max={100}
-                                step={1}
-                                value={[volume]}
-                                onValueChange={(vals) => setVolume(vals[0])}
-                                className="w-full"
-                            />
-                        </div>
-                    )}
-                </div>
-            </PopoverContent>
-        </Popover>
+            {/* "Speaking" Visualizer Effect */}
+            {isSpeaking && (
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 blur-sm" />
+            )}
+        </div>
     );
 };
 

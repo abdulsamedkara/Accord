@@ -204,6 +204,12 @@ export const useAppStore = create<AppState>((set) => ({
     noiseSuppression: true,
     echoCancellation: true,
     autoGainControl: true,
+
+    userVolumes: {},
+    setUserVolume: (userId, volume) => set((state) => ({
+        userVolumes: { ...state.userVolumes, [userId]: volume }
+    })),
+
     speakingUsers: {},
 
     toggleAudio: () => set((state) => ({ isAudioEnabled: !state.isAudioEnabled })),
