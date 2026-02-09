@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Slider } from "@/components/ui/slider";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 
 interface ChannelSidebarProps {
     serverName: string;
@@ -544,14 +544,19 @@ function ChannelSection({
 
                                                         {/* Custom Slider Container to ensure visibility */}
                                                         <div className="px-1 py-1">
-                                                            <Slider
+                                                            <SliderPrimitive.Root
                                                                 defaultValue={[50]}
                                                                 max={100}
                                                                 step={1}
                                                                 value={[userVolumes?.[user.userId] ?? 50]}
                                                                 onValueChange={(vals) => setUserVolume?.(user.userId, vals[0])}
-                                                                className="w-full cursor-pointer py-2" // Added padding for touch target
-                                                            />
+                                                                className="relative flex w-full touch-none select-none items-center py-2 cursor-pointer"
+                                                            >
+                                                                <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-zinc-700/50">
+                                                                    <SliderPrimitive.Range className="absolute h-full bg-indigo-500" />
+                                                                </SliderPrimitive.Track>
+                                                                <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-indigo-500 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-lg shadow-indigo-500/50" />
+                                                            </SliderPrimitive.Root>
                                                         </div>
                                                     </div>
                                                 </div>
