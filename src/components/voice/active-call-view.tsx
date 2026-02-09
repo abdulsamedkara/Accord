@@ -1,10 +1,10 @@
 "use client";
 
 import { useTracks, VideoTrack, useParticipants, useParticipantContext } from "@livekit/components-react";
-import { Track, Participant, RoomEvent } from "livekit-client";
+import { Track, Participant, RoomEvent, ParticipantEvent } from "livekit-client";
 import { Maximize2, Minimize2, Mic, MicOff } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { cn } "@/lib/utils";
 
 export const ActiveCallView = () => {
     const screenShareTracks = useTracks([Track.Source.ScreenShare]);
@@ -61,7 +61,7 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
             setIsMuted(participant.isMicrophoneEnabled === false);
             setIsCameraOff(participant.isCameraEnabled === false);
 
-            const cameraPub = participant.getTrack(Track.Source.Camera);
+            const cameraPub = participant.getTrackPublication(Track.Source.Camera);
             // Construct a track reference for VideoTrack component
             if (cameraPub && cameraPub.track) {
                 setVideoTrackRef({
@@ -76,24 +76,24 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
 
         updateState();
 
-        participant.on(RoomEvent.ParticipantMetadataChanged, updateState);
-        participant.on(RoomEvent.TrackMuted, updateState);
-        participant.on(RoomEvent.TrackUnmuted, updateState);
-        participant.on(RoomEvent.IsSpeakingChanged, updateState);
-        participant.on(RoomEvent.TrackPublished, updateState);
-        participant.on(RoomEvent.TrackUnpublished, updateState);
-        participant.on(RoomEvent.TrackSubscribed, updateState);
-        participant.on(RoomEvent.TrackUnsubscribed, updateState);
+        participant.on(ParticipantEvent.ParticipantMetadataChanged, updateState);
+        participant.on(ParticipantEvent.TrackMuted, updateState);
+        participant.on(ParticipantEvent.TrackUnmuted, updateState);
+        participant.on(ParticipantEvent.IsSpeakingChanged, updateState);
+        participant.on(ParticipantEvent.TrackPublished, updateState);
+        participant.on(ParticipantEvent.TrackUnpublished, updateState);
+        participant.on(ParticipantEvent.TrackSubscribed, updateState);
+        participant.on(ParticipantEvent.TrackUnsubscribed, updateState);
 
         return () => {
-            participant.off(RoomEvent.ParticipantMetadataChanged, updateState);
-            participant.off(RoomEvent.TrackMuted, updateState);
-            participant.off(RoomEvent.TrackUnmuted, updateState);
-            participant.off(RoomEvent.IsSpeakingChanged, updateState);
-            participant.off(RoomEvent.TrackPublished, updateState);
-            participant.off(RoomEvent.TrackUnpublished, updateState);
-            participant.off(RoomEvent.TrackSubscribed, updateState);
-            participant.off(RoomEvent.TrackUnsubscribed, updateState);
+            participant.off(ParticipantEvent.ParticipantMetadataChanged, updateState);
+            participant.off(ParticipantEvent.TrackMuted, updateState);
+            participant.off(ParticipantEvent.TrackUnmuted, updateState);
+            participant.off(ParticipantEvent.IsSpeakingChanged, updateState);
+            participant.off(ParticipantEvent.TrackPublished, updateState);
+            participant.off(ParticipantEvent.TrackUnpublished, updateState);
+            participant.off(ParticipantEvent.TrackSubscribed, updateState);
+            participant.off(ParticipantEvent.TrackUnsubscribed, updateState);
         };
     }, [participant]);
 
