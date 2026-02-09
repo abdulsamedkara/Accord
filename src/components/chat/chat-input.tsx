@@ -21,7 +21,7 @@ export function ChatInput({
 }: ChatInputProps) {
     const [content, setContent] = useState("");
     const [isTyping, setIsTyping] = useState(false);
-    const typingTimeoutRef = useRef<NodeJS.Timeout>();
+    const typingTimeoutRef = useRef<NodeJS.Timeout>(undefined);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
