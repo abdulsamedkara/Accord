@@ -54,7 +54,7 @@ interface AppState {
     setVoiceStates: (states: Record<string, any[]>) => void;
     updateVoiceState: (channelId: string, users: any[]) => void;
 
-    // Media Preferences
+    // Audio/Video Settings
     isAudioEnabled: boolean; // Microphone
     isVideoEnabled: boolean; // Camera
     isDeafened: boolean; // Headphone (Deafen)
@@ -64,6 +64,10 @@ interface AppState {
     noiseSuppression: boolean;
     echoCancellation: boolean;
     autoGainControl: boolean;
+
+    // Volume Control
+    userVolumes: Record<string, number>; // userId -> volume (0-100)
+    setUserVolume: (userId: string, volume: number) => void;
 
     speakingUsers: Record<string, boolean>; // Map of userId -> isSpeaking
 
