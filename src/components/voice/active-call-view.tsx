@@ -1,6 +1,6 @@
 "use client";
 
-import { useTracks, VideoTrack, useParticipants, ConfigContext } from "@livekit/components-react";
+import { useTracks, VideoTrack, useParticipants } from "@livekit/components-react";
 import { Track, RoomEvent } from "livekit-client";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
