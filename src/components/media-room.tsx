@@ -136,8 +136,7 @@ export const MediaRoom = ({
                 </div>
             </div>
 
-            {/* Control Audio Output for Deafen feature */}
-            {!isDeafened && <RoomAudioRenderer />}
+            {/* Global Audio Renderer Removed - Handled individually in ParticipantTile for volume control */}
             <MediaController chatId={chatId} />
         </LiveKitRoom>
     );

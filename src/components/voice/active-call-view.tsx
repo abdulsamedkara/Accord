@@ -1,10 +1,11 @@
 "use client";
 
-import { useTracks, VideoTrack, useParticipants, useParticipantContext } from "@livekit/components-react";
+import { useTracks, VideoTrack, useParticipants, useParticipantContext, AudioTrack } from "@livekit/components-react";
 import { Track, Participant, RoomEvent, ParticipantEvent } from "livekit-client";
-import { Maximize2, Minimize2, Mic, MicOff } from "lucide-react";
+import { Maximize2, Minimize2, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
 
 export const ActiveCallView = () => {
     const screenShareTracks = useTracks([Track.Source.ScreenShare]);
@@ -54,6 +55,10 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
 
     // Using a simple state sync for track updates
     const [videoTrackRef, setVideoTrackRef] = useState<any>(null);
+    const [audioTrackRef, setAudioTrackRef] = useState<any>(null);
+    const [volume, setVolume] = useState(50); // Start at 50%
+    const [audioTrackRef, setAudioTrackRef] = useState<any>(null);
+    const [volume, setVolume] = useState(50); // Default volume 50%
 
     useEffect(() => {
         const updateState = () => {
@@ -71,6 +76,28 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                 });
             } else {
                 setVideoTrackRef(null);
+            }
+
+            const audioPub = participant.getTrackPublication(Track.Source.Microphone);
+            if (audioPub && audioPub.track) {
+                setAudioTrackRef({
+                    participant: participant,
+                    source: Track.Source.Microphone,
+                    publication: audioPub
+                });
+            } else {
+                setAudioTrackRef(null);
+            }
+
+            const audioPub = participant.getTrackPublication(Track.Source.Microphone);
+            if (audioPub && audioPub.track) {
+                setAudioTrackRef({
+                    participant: participant,
+                    source: Track.Source.Microphone,
+                    publication: audioPub
+                });
+            } else {
+                setAudioTrackRef(null);
             }
         };
 
@@ -134,6 +161,31 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                         {/* We don't have avatar url directly on Participant easily without metadata, using initials fallback */}
                         {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
                     </div>
+
+                    {/* Volume Control (Top Left - Hover) */}
+                    {!participant.isLocal && (
+                        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-zinc-900/80 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-50 border border-white/10 shadow-lg"
+                            onClick={(e) => e.stopPropagation()} /* Prevent card clicks */
+                        >
+                            <Volume2 className="w-4 h-4 text-zinc-300" />
+                            <Slider
+                                defaultValue={[50]}
+                                max={100}
+                                step={1}
+                                value={[volume]}
+                                onValueChange={(vals) => setVolume(vals[0])}
+                                className="w-20 cursor-pointer"
+                            />
+                        </div>
+                    )}
+
+                    {/* Audio Rendering for Remote Participants */}
+                    {!participant.isLocal && audioTrackRef && (
+                        <AudioTrack
+                            trackRef={audioTrackRef}
+                            volume={volume / 100}
+                        />
+                    )}
                 </div>
             )}
 
@@ -148,6 +200,29 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                     </div>
                 )}
             </div>
+
+            {/* Volume Control (Top Left - Hover) */}
+            {!participant.isLocal && (
+                <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-20">
+                    <Volume2 className="w-4 h-4 text-zinc-400" />
+                    <Slider
+                        defaultValue={[50]}
+                        max={100}
+                        step={1}
+                        value={[volume]}
+                        onValueChange={(vals) => setVolume(vals[0])}
+                        className="w-20 cursor-pointer"
+                    />
+                </div>
+            )}
+
+            {/* Audio Rendering for Remote Participants */}
+            {!participant.isLocal && audioTrackRef && (
+                <AudioTrack
+                    trackRef={audioTrackRef}
+                    volume={volume / 100}
+                />
+            )}
 
             {/* Info Bar (Bottom Left) */}
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
