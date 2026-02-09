@@ -6,6 +6,8 @@ import { Maximize2, Minimize2, Mic, MicOff, Volume2, VolumeX } from "lucide-reac
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const ActiveCallView = () => {
     const screenShareTracks = useTracks([Track.Source.ScreenShare]);
@@ -112,49 +114,88 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
     }, [participant]);
 
     return (
-        <div
-            className={cn(
-                "relative group overflow-hidden transition-all duration-300",
-                // Glassmorphism Base
-                "bg-zinc-900/40 backdrop-blur-md border border-white/5",
-                // Shape & Shadow
-                "rounded-2xl shadow-2xl",
-                // Speaking Glow (Green Ring + Shadow)
-                isSpeaking
-                    ? "ring-2 ring-emerald-500/80 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] scale-[1.01] z-10"
-                    : "hover:border-white/10 hover:bg-zinc-900/60",
-                // Size (Responsive Grid or Mini)
-                mini ? "w-[200px] aspect-video flex-shrink-0" : "w-full max-w-[400px] aspect-video",
-                className
-            )}
-        >
-            {/* Video Layer */}
-            {!isCameraOff && videoTrackRef ? (
-                <VideoTrack
-                    trackRef={videoTrackRef}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-            ) : (
-                /* Avatar / No Video Fallback */
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/50">
-                    {/* Avatar Pulse if Speaking */}
-                    <div className={cn(
-                        "relative w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl transition-all duration-300",
-                        // Dynamic Gradient based on username length or random logic could be cool, standardizing on primary for now
-                        "bg-gradient-to-br from-indigo-500 to-purple-600",
-                        isSpeaking && "scale-110 ring-4 ring-emerald-500/30 shadow-[0_0_40px_rgba(99,102,241,0.6)]"
-                    )}>
-                        {/* Image or Initials */}
-                        {/* We don't have avatar url directly on Participant easily without metadata, using initials fallback */}
-                        {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
+        <Popover>
+            <PopoverTrigger asChild>
+                <div
+                    className={cn(
+                        "relative group overflow-hidden transition-all duration-300 cursor-pointer",
+                        // Glassmorphism Base
+                        "bg-zinc-900/40 backdrop-blur-md border border-white/5",
+                        // Shape & Shadow
+                        "rounded-2xl shadow-2xl",
+                        // Speaking Glow (Green Ring + Shadow)
+                        isSpeaking
+                            ? "ring-2 ring-emerald-500/80 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)] scale-[1.01] z-10"
+                            : "hover:border-white/10 hover:bg-zinc-900/60",
+                        // Size (Responsive Grid or Mini)
+                        mini ? "w-[200px] aspect-video flex-shrink-0" : "w-full max-w-[400px] aspect-video",
+                        className
+                    )}
+                >
+                    {/* Video Layer */}
+                    {!isCameraOff && videoTrackRef ? (
+                        <VideoTrack
+                            trackRef={videoTrackRef}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                    ) : (
+                        /* Avatar / No Video Fallback */
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-950/50">
+                            {/* Avatar Pulse if Speaking */}
+                            <div className={cn(
+                                "relative w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold text-white shadow-xl transition-all duration-300",
+                                // Dynamic Gradient based on username length or random logic could be cool, standardizing on primary for now
+                                "bg-gradient-to-br from-indigo-500 to-purple-600",
+                                isSpeaking && "scale-110 ring-4 ring-emerald-500/30 shadow-[0_0_40px_rgba(99,102,241,0.6)]"
+                            )}>
+                                {/* Image or Initials */}
+                                {/* We don't have avatar url directly on Participant easily without metadata, using initials fallback */}
+                                {(participant.name || participant.identity)?.substring(0, 2).toUpperCase()}
+                            </div>
+
+                            {/* Volume Control (Top Left - Hover) */}
+                            {!participant.isLocal && (
+                                <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-zinc-900/80 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-50 border border-white/10 shadow-lg"
+                                    onClick={(e) => e.stopPropagation()} /* Prevent card clicks */
+                                >
+                                    <Volume2 className="w-4 h-4 text-zinc-300" />
+                                    <Slider
+                                        defaultValue={[50]}
+                                        max={100}
+                                        step={1}
+                                        value={[volume]}
+                                        onValueChange={(vals) => setVolume(vals[0])}
+                                        className="w-20 cursor-pointer"
+                                    />
+                                </div>
+                            )}
+
+                            {/* Audio Rendering for Remote Participants */}
+                            {!participant.isLocal && audioTrackRef && (
+                                <AudioTrack
+                                    trackRef={audioTrackRef}
+                                    volume={volume / 100}
+                                />
+                            )}
+                        </div>
+                    )}
+
+                    {/* Overlay Gradient (Top and Bottom for readability) */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
+
+                    {/* Status (Top Right) */}
+                    <div className="absolute top-3 right-3 flex gap-2">
+                        {isMuted && (
+                            <div className="bg-red-500/90 text-white p-1.5 rounded-full shadow-lg backdrop-blur-sm">
+                                <MicOff className="w-3.5 h-3.5" />
+                            </div>
+                        )}
                     </div>
 
                     {/* Volume Control (Top Left - Hover) */}
                     {!participant.isLocal && (
-                        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-zinc-900/80 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-50 border border-white/10 shadow-lg"
-                            onClick={(e) => e.stopPropagation()} /* Prevent card clicks */
-                        >
-                            <Volume2 className="w-4 h-4 text-zinc-300" />
+                        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-20">
+                            <Volume2 className="w-4 h-4 text-zinc-400" />
                             <Slider
                                 defaultValue={[50]}
                                 max={100}
@@ -173,145 +214,107 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                             volume={volume / 100}
                         />
                     )}
-                </div>
-            )}
 
-            {/* Overlay Gradient (Top and Bottom for readability) */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none" />
+                    {/* Info Bar (Bottom Left) */}
+                    <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2 max-w-full">
+                            <div className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors border max-w-full",
+                                isSpeaking
+                                    ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-100"
+                                    : "bg-black/40 border-white/5 text-zinc-100"
+                            )}>
+                                <div className={cn(
+                                    "w-2 h-2 rounded-full transition-all duration-300",
+                                    isSpeaking ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" : "bg-transparent"
+                                )} />
 
-            {/* Status (Top Right) */}
-            <div className="absolute top-3 right-3 flex gap-2">
-                {isMuted && (
-                    <div className="bg-red-500/90 text-white p-1.5 rounded-full shadow-lg backdrop-blur-sm">
-                        <MicOff className="w-3.5 h-3.5" />
+                                <span className="text-xs font-semibold truncate leading-none">
+                                    {participant.name || participant.identity} {participant.isLocal && "(You)"}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                )}
-            </div>
 
-            {/* Volume Control (Top Left - Hover) */}
-            {!participant.isLocal && (
-                <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/60 p-2 rounded-lg backdrop-blur-md flex items-center gap-2 w-32 z-20">
-                    <Volume2 className="w-4 h-4 text-zinc-400" />
-                    <Slider
-                        defaultValue={[50]}
-                        max={100}
-                        step={1}
-                        value={[volume]}
-                        onValueChange={(vals) => setVolume(vals[0])}
-                        className="w-20 cursor-pointer"
-                    />
+                    {/* "Speaking" Visualizer Effect (Optional - just a subtle highlight) */}
+                    {isSpeaking && (
+                        <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 blur-sm" />
+                    )}
                 </div>
-            )}
-
-            {/* Audio Rendering for Remote Participants */}
-            {!participant.isLocal && audioTrackRef && (
-                <AudioTrack
-                    trackRef={audioTrackRef}
-                    volume={volume / 100}
-                />
-            )}
-
-            {/* Info Bar (Bottom Left) */}
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 max-w-full">
-                    <div className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors border max-w-full",
-                        isSpeaking
-                            ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-100"
-                            : "bg-black/40 border-white/5 text-zinc-100"
-                    )}>
-                        {/* Small Speaking Dot */}
-                        <div className={cn(
-                            "w-2 h-2 rounded-full transition-all duration-300",
-                            isSpeaking ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" : "bg-transparent"
-                        )} />
-
-                        <span className="text-xs font-semibold truncate leading-none">
-                            {participant.name || participant.identity} {participant.isLocal && "(You)"}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* "Speaking" Visualizer Effect (Optional - just a subtle highlight) */}
-            {isSpeaking && (
-                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0 blur-sm" />
-            )}
-        </div>
-    );
+                );
 };
 
 
-// --- Screen Share View ---
+                // --- Screen Share View ---
 
-interface ScreenShareFocusViewProps {
-    screenShareTrack: any;
-    participants: Participant[];
+                interface ScreenShareFocusViewProps {
+                    screenShareTrack: any;
+                participants: Participant[];
 }
 
-const ScreenShareFocusView = ({ screenShareTrack, participants }: ScreenShareFocusViewProps) => {
+                const ScreenShareFocusView = ({screenShareTrack, participants}: ScreenShareFocusViewProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isFullscreen, setIsFullscreen] = useState(false);
+                    const [isFullscreen, setIsFullscreen] = useState(false);
 
     const toggleFullscreen = () => {
         if (!containerRef.current) return;
-        if (!document.fullscreenElement) {
-            containerRef.current.requestFullscreen();
-            setIsFullscreen(true);
+                    if (!document.fullscreenElement) {
+                        containerRef.current.requestFullscreen();
+                    setIsFullscreen(true);
         } else {
-            document.exitFullscreen();
-            setIsFullscreen(false);
+                        document.exitFullscreen();
+                    setIsFullscreen(false);
         }
     };
 
     useEffect(() => {
         const onFullscreenChange = () => {
-            setIsFullscreen(!!document.fullscreenElement);
+                        setIsFullscreen(!!document.fullscreenElement);
         };
-        document.addEventListener("fullscreenchange", onFullscreenChange);
+                    document.addEventListener("fullscreenchange", onFullscreenChange);
         return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
     }, []);
 
-    // Filter out the local participant if we wanted, but showing everyone is fine in the bottom bar
-    // Actually typically the person sharing screen is NOT in the bottom bar, but for now let's show everyone.
+                    // Filter out the local participant if we wanted, but showing everyone is fine in the bottom bar
+                    // Actually typically the person sharing screen is NOT in the bottom bar, but for now let's show everyone.
 
-    return (
-        <div className="flex flex-col h-full w-full bg-black">
-            {/* Main Stage (Screen Share) */}
-            <div
-                ref={containerRef}
-                className="flex-1 relative bg-zinc-950 flex items-center justify-center overflow-hidden"
-            >
-                {/* Dotted Background Pattern for professional feel */}
-                <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                    style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
-                />
+                    return (
+                    <div className="flex flex-col h-full w-full bg-black">
+                        {/* Main Stage (Screen Share) */}
+                        <div
+                            ref={containerRef}
+                            className="flex-1 relative bg-zinc-950 flex items-center justify-center overflow-hidden"
+                        >
+                            {/* Dotted Background Pattern for professional feel */}
+                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+                                style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}
+                            />
 
-                <VideoTrack
-                    trackRef={screenShareTrack}
-                    className="max-h-full max-w-full object-contain shadow-2xl"
-                />
+                            <VideoTrack
+                                trackRef={screenShareTrack}
+                                className="max-h-full max-w-full object-contain shadow-2xl"
+                            />
 
-                {/* Fullscreen Toggle */}
-                <button
-                    onClick={toggleFullscreen}
-                    className="absolute top-6 right-6 p-2.5 bg-black/60 hover:bg-zinc-800 text-white rounded-xl backdrop-blur-md border border-white/10 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
-                >
-                    {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-                </button>
-            </div>
+                            {/* Fullscreen Toggle */}
+                            <button
+                                onClick={toggleFullscreen}
+                                className="absolute top-6 right-6 p-2.5 bg-black/60 hover:bg-zinc-800 text-white rounded-xl backdrop-blur-md border border-white/10 transition-all opacity-0 group-hover:opacity-100 shadow-xl"
+                            >
+                                {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+                            </button>
+                        </div>
 
-            {/* Bottom Bar (Participants) */}
-            <div className="h-[160px] bg-zinc-950/90 backdrop-blur-sm flex gap-3 p-4 overflow-x-auto justify-center border-t border-zinc-800/50">
-                {participants.map((participant) => (
-                    <ParticipantTile
-                        key={participant.identity}
-                        participant={participant}
-                        mini={true}
-                        className="w-[200px]"
-                    />
-                ))}
-            </div>
-        </div>
-    );
+                        {/* Bottom Bar (Participants) */}
+                        <div className="h-[160px] bg-zinc-950/90 backdrop-blur-sm flex gap-3 p-4 overflow-x-auto justify-center border-t border-zinc-800/50">
+                            {participants.map((participant) => (
+                                <ParticipantTile
+                                    key={participant.identity}
+                                    participant={participant}
+                                    mini={true}
+                                    className="w-[200px]"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                    );
 };
