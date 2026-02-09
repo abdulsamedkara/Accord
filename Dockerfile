@@ -23,6 +23,16 @@ RUN npx prisma generate
 # Copy rest of the application
 COPY . .
 
+# Accept build arguments from Railway
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_SOCKET_URL
+ARG NEXT_PUBLIC_LIVEKIT_URL
+
+# Make them available as environment variables during build
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_SOCKET_URL=$NEXT_PUBLIC_SOCKET_URL
+ENV NEXT_PUBLIC_LIVEKIT_URL=$NEXT_PUBLIC_LIVEKIT_URL
+
 # Build the application
 RUN npm run build
 
