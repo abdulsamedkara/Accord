@@ -133,7 +133,7 @@ export async function getUnreadCounts(userId: string, channelIds: string[]): Pro
     const counts: Record<string, number> = {};
 
     channelIds.forEach((channelId, index) => {
-        const count = results[index] as string | null;
+        const count = results[index] as unknown as string | null;
         counts[channelId] = count ? parseInt(count, 10) : 0;
     });
 
