@@ -49,7 +49,7 @@ export async function getOnlineUsers(userIds: string[]): Promise<string[]> {
     }
 
     const results = await pipeline.exec();
-    return userIds.filter((_, index) => results[index] === "online");
+    return userIds.filter((_, index) => (results[index] as unknown as string) === "online");
 }
 
 // ═══════════════════════════════════════════════════════════════
