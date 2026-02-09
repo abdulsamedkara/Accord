@@ -61,7 +61,7 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
             setIsMuted(participant.isMicrophoneEnabled === false);
             setIsCameraOff(participant.isCameraEnabled === false);
 
-            const cameraPub = participant.getTrackDocumentation?.(Track.Source.Camera) ?? participant.getTrack(Track.Source.Camera);
+            const cameraPub = participant.getTrack(Track.Source.Camera);
             // Construct a track reference for VideoTrack component
             if (cameraPub && cameraPub.track) {
                 setVideoTrackRef({
