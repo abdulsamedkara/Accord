@@ -53,7 +53,9 @@ export function ChannelSidebar({
         toggleVideo,
         toggleDeafened,
         speakingUsers,
-        setUserSettingsModalOpen
+        setUserSettingsModalOpen,
+        servers,
+        removeServer
     } = useAppStore();
 
     const [showDropdown, setShowDropdown] = useState(false);
@@ -61,15 +63,47 @@ export function ChannelSidebar({
     const [inviteCode, setInviteCode] = useState("");
     const [copied, setCopied] = useState(false);
     const [isCreatingInvite, setIsCreatingInvite] = useState(false);
+    const [isLeaving, setIsLeaving] = useState(false);
 
     const textChannels = channels.filter((c) => c.type === "TEXT");
     const voiceChannels = channels.filter((c) => c.type === "VOICE");
+
+    const currentServer = servers.find((s) => s.id === serverId);
+    const isOwner = currentServer?.ownerId === user?.id;
 
     const handleChannelInteraction = (channelId: string, type: "TEXT" | "VOICE") => {
         if (type === "VOICE") {
             setActiveVoiceChannelId(channelId);
         }
         onChannelClick(channelId);
+    };
+
+    const handleLeaveServer = async () => {
+        if (!serverId) return;
+        if (isOwner) {
+            alert("Founders cannot leave their own server. You must delete the server instead.");
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to leave ${serverName}?`)) return;
+
+        setIsLeaving(true);
+        try {
+            const res = await fetch(`/api/servers/${serverId}/leave`, {
+                method: "POST",
+            });
+
+            if (res.ok) {
+                removeServer(serverId);
+                router.push("/");
+            } else {
+                console.error("Failed to leave server");
+            }
+        } catch (error) {
+            console.error("Leave server error:", error);
+        } finally {
+            setIsLeaving(false);
+        }
     };
 
     const handleLogout = async () => {
@@ -149,9 +183,21 @@ export function ChannelSidebar({
                                 Create Channel
                             </button>
                         )}
+
+                        {!isOwner && (
+                            <button
+                                onClick={handleLeaveServer}
+                                disabled={isLeaving}
+                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-[hsl(var(--accent))] transition-colors"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                {isLeaving ? "Leaving..." : "Leave Server"}
+                            </button>
+                        )}
+
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-[hsl(var(--accent))] transition-colors"
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[hsl(var(--muted-foreground))] hover:text-red-500 hover:bg-[hsl(var(--accent))] transition-colors border-t border-[hsl(var(--border))]"
                         >
                             <LogOut className="w-4 h-4" />
                             Log Out
