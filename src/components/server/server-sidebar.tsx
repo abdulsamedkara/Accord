@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { useAppStore } from "@/store";
 import { ServerWithMembers } from "@/types";
 import { cn, getAvatarUrl } from "@/lib/utils";
@@ -26,6 +26,8 @@ export function ServerSidebar({
     onServerClick,
     onCreateServer,
 }: ServerSidebarProps) {
+    const { setUserSettingsModalOpen } = useAppStore();
+
     return (
         <div className="flex flex-col items-center w-[72px] h-full py-3 bg-[hsl(var(--sidebar-bg))]">
             <TooltipProvider delayDuration={0}>
@@ -112,6 +114,21 @@ export function ServerSidebar({
                         </button>
                     </TooltipTrigger>
                     <TooltipContent side="right">Add a Server</TooltipContent>
+                </Tooltip>
+
+                <Separator className="w-8 h-0.5 bg-[hsl(var(--border))] rounded-full my-2" />
+
+                {/* Settings button */}
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <button
+                            className="server-icon text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]"
+                            onClick={() => setUserSettingsModalOpen(true)}
+                        >
+                            <Settings className="w-6 h-6" />
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">User Settings</TooltipContent>
                 </Tooltip>
             </TooltipProvider>
         </div>

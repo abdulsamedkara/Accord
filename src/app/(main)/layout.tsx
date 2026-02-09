@@ -7,6 +7,7 @@ import { getSocket } from "@/realtime/socket";
 import { ServerSidebar } from "@/components/server/server-sidebar";
 import { CreateServerModal } from "@/components/server/create-server-modal";
 import { ActiveVoiceManager } from "@/components/voice/active-voice-manager";
+import { UserSettingsModal } from "@/components/user/user-settings-modal";
 import { SafeUser, ServerWithMembers } from "@/types";
 
 export default function MainLayout({
@@ -26,6 +27,9 @@ export default function MainLayout({
         isCreateServerModalOpen,
         setCreateServerModalOpen,
         updateVoiceState,
+        setOnlineUsers,
+        addOnlineUser,
+        removeOnlineUser,
     } = useAppStore();
     const [isLoading, setIsLoading] = useState(true);
 
@@ -41,13 +45,17 @@ export default function MainLayout({
 
     // Fetch user and servers on mount
     useEffect(() => {
+        console.log("[MainLayout] Mounting, starting fetch...");
         const fetchData = async () => {
             try {
                 // Fetch current user
+                console.log("[MainLayout] Fetching user...");
                 const userRes = await fetch("/api/auth/me");
                 const userData = await userRes.json();
+                console.log("[MainLayout] User data:", userData);
 
                 if (!userData.user) {
+                    console.log("[MainLayout] No user found, redirecting...");
                     router.push("/login");
                     return;
                 }
@@ -55,13 +63,16 @@ export default function MainLayout({
                 setUser(userData.user);
 
                 // Fetch servers
+                console.log("[MainLayout] Fetching servers...");
                 const serversRes = await fetch("/api/servers");
                 const serversData = await serversRes.json();
+                console.log("[MainLayout] Servers data:", serversData);
                 setServers(serversData.servers || []);
             } catch (error) {
-                console.error("Failed to fetch data:", error);
-                router.push("/login");
+                console.error("[MainLayout] Failed to fetch data:", error);
+                // router.push("/login");
             } finally {
+                console.log("[MainLayout] Fetch complete, setting isLoading to false");
                 setIsLoading(false);
             }
         };
@@ -69,21 +80,45 @@ export default function MainLayout({
         fetchData();
     }, [router, setUser, setServers]);
 
-    // Listen for global voice state updates
+    // Listen for global socket events (Voice & Presence)
     useEffect(() => {
-        const socketInstance = getSocket();
+        if (!user) {
+            console.log("[MainLayout] No user for socket yet");
+            return;
+        }
+
+        console.log("[MainLayout] Initializing socket for user:", user.id);
+        const socketInstance = getSocket(user.id);
 
         const handleVoiceStateUpdate = (data: { channelId: string; users: any[] }) => {
-            console.log("[MainLayout] Received voice update:", data);
+            // console.log("[MainLayout] Received voice update:", data);
             updateVoiceState(data.channelId, data.users);
         };
 
+        const handlePresenceState = (data: { onlineUsers: string[] }) => {
+            console.log("[MainLayout] Received presence state:", data.onlineUsers.length);
+            setOnlineUsers(data.onlineUsers);
+        };
+
+        const handlePresenceUpdate = (data: { userId: string; isOnline: boolean }) => {
+            console.log("[MainLayout] Presence update:", data);
+            if (data.isOnline) {
+                addOnlineUser(data.userId);
+            } else {
+                removeOnlineUser(data.userId);
+            }
+        };
+
         socketInstance.on("voice:state-update", handleVoiceStateUpdate);
+        socketInstance.on("presence:state", handlePresenceState);
+        socketInstance.on("presence:update", handlePresenceUpdate);
 
         return () => {
             socketInstance.off("voice:state-update", handleVoiceStateUpdate);
+            socketInstance.off("presence:state", handlePresenceState);
+            socketInstance.off("presence:update", handlePresenceUpdate);
         };
-    }, [updateVoiceState]);
+    }, [user, updateVoiceState, setOnlineUsers, addOnlineUser, removeOnlineUser]);
 
     const handleServerClick = (serverId: string) => {
         if (!serverId) {
@@ -130,6 +165,7 @@ export default function MainLayout({
                 open={isCreateServerModalOpen}
                 onOpenChange={setCreateServerModalOpen}
             />
+            <UserSettingsModal />
             <ActiveVoiceManager />
         </div>
     );

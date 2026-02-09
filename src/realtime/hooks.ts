@@ -47,7 +47,7 @@ export function useSocketMessages(channelId: string | null) {
             }
         };
 
-        // Listen for message updates
+        // Listen for message updates (content or reactions)
         const handleUpdateMessage = (message: MessageWithUser) => {
             if (message.channelId === channelId) {
                 updateMessage(message.id, message.content);

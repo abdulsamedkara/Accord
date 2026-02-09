@@ -171,7 +171,7 @@ function MessageItem({
 
             {/* Action buttons */}
             {showActions && !message.deleted && !isEditing && (
-                <div className="absolute right-4 -top-3 flex items-center gap-0.5 p-0.5 bg-[hsl(var(--card))] rounded-md border border-[hsl(var(--border))] shadow-lg">
+                <div className="absolute right-4 -top-3 flex items-center gap-0.5 p-0.5 bg-[hsl(var(--card))] rounded-md border border-[hsl(var(--border))] shadow-lg z-10">
                     {isOwner && (
                         <button
                             onClick={() => setIsEditing(true)}

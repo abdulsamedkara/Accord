@@ -44,6 +44,8 @@ interface AppState {
     setCreateServerModalOpen: (open: boolean) => void;
     isCreateChannelModalOpen: boolean;
     setCreateChannelModalOpen: (open: boolean) => void;
+    isUserSettingsModalOpen: boolean;
+    setUserSettingsModalOpen: (open: boolean) => void;
 
     // Voice
     activeVoiceChannelId: string | null;
@@ -53,16 +55,58 @@ interface AppState {
     updateVoiceState: (channelId: string, users: any[]) => void;
 
     // Media Preferences
-    isAudioEnabled: boolean;
-    isVideoEnabled: boolean;
+    isAudioEnabled: boolean; // Microphone
+    isVideoEnabled: boolean; // Camera
+    isDeafened: boolean; // Headphone (Deafen)
+    audioInputDeviceId: string | undefined;
+    audioOutputDeviceId: string | undefined;
+    videoDeviceId: string | undefined;
+    noiseSuppression: boolean;
+    echoCancellation: boolean;
+    autoGainControl: boolean;
+
+    speakingUsers: Record<string, boolean>; // Map of userId -> isSpeaking
+
     toggleAudio: () => void;
     toggleVideo: () => void;
+    toggleDeafened: () => void;
     setAudioEnabled: (enabled: boolean) => void;
     setVideoEnabled: (enabled: boolean) => void;
+    setDeafened: (enabled: boolean) => void;
+
+    setAudioInputDeviceId: (id: string) => void;
+    setAudioOutputDeviceId: (id: string) => void;
+    setVideoDeviceId: (id: string) => void;
+    setNoiseSuppression: (enabled: boolean) => void;
+    setEchoCancellation: (enabled: boolean) => void;
+    setAutoGainControl: (enabled: boolean) => void;
+
+    inputVolume: number;
+    inputSensitivity: number;
+    isInputSensitivityAuto: boolean;
+    inputMode: "voice-activity" | "push-to-talk";
+    pushToTalkKey: string | null;
+    toggleMuteKey: string | null;
+
+    setInputVolume: (volume: number) => void;
+    setInputSensitivity: (sensitivity: number) => void;
+    setInputSensitivityAuto: (auto: boolean) => void;
+    setInputMode: (mode: "voice-activity" | "push-to-talk") => void;
+    setPushToTalkKey: (key: string | null) => void;
+    setToggleMuteKey: (key: string | null) => void;
+
+    setSpeakingUsers: (users: Record<string, boolean>) => void;
+    updateSpeakingUser: (userId: string, isSpeaking: boolean) => void;
+
+    // Presence
+    onlineUsers: Set<string>;
+    setOnlineUsers: (userIds: string[]) => void;
+    addOnlineUser: (userId: string) => void;
+    removeOnlineUser: (userId: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
-    // User
+    // ... (previous state) ...
     user: null,
     setUser: (user) => set({ user }),
     clearUser: () => set({ user: null, servers: [], messages: [], typingUsers: [], activeVoiceChannelId: null }),
@@ -102,7 +146,6 @@ export const useAppStore = create<AppState>((set) => ({
     setMessages: (messages) => set({ messages }),
     addMessage: (message) =>
         set((state) => {
-            // Check if message already exists to prevent duplicates
             if (state.messages.some(m => m.id === message.id)) {
                 return state;
             }
@@ -132,6 +175,8 @@ export const useAppStore = create<AppState>((set) => ({
     setCreateServerModalOpen: (open) => set({ isCreateServerModalOpen: open }),
     isCreateChannelModalOpen: false,
     setCreateChannelModalOpen: (open) => set({ isCreateChannelModalOpen: open }),
+    isUserSettingsModalOpen: false,
+    setUserSettingsModalOpen: (open) => set({ isUserSettingsModalOpen: open }),
 
     // Voice
     activeVoiceChannelId: null,
@@ -146,10 +191,61 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
     // Media Preferences
-    isAudioEnabled: true, // Default to true
-    isVideoEnabled: false, // Default to false
+    isAudioEnabled: true,
+    isVideoEnabled: false,
+    isDeafened: false,
+    audioInputDeviceId: undefined,
+    audioOutputDeviceId: undefined,
+    videoDeviceId: undefined,
+    noiseSuppression: true,
+    echoCancellation: true,
+    autoGainControl: true,
+    speakingUsers: {},
+
     toggleAudio: () => set((state) => ({ isAudioEnabled: !state.isAudioEnabled })),
     toggleVideo: () => set((state) => ({ isVideoEnabled: !state.isVideoEnabled })),
+    toggleDeafened: () => set((state) => ({ isDeafened: !state.isDeafened })),
+
     setAudioEnabled: (enabled) => set({ isAudioEnabled: enabled }),
     setVideoEnabled: (enabled) => set({ isVideoEnabled: enabled }),
+    setDeafened: (enabled) => set({ isDeafened: enabled }),
+
+    setAudioInputDeviceId: (id) => set({ audioInputDeviceId: id }),
+    setAudioOutputDeviceId: (id) => set({ audioOutputDeviceId: id }),
+    setVideoDeviceId: (id) => set({ videoDeviceId: id }),
+    setNoiseSuppression: (enabled) => set({ noiseSuppression: enabled }),
+    setEchoCancellation: (enabled) => set({ echoCancellation: enabled }),
+    setAutoGainControl: (enabled) => set({ autoGainControl: enabled }),
+
+    inputVolume: 100,
+    inputSensitivity: 50,
+    isInputSensitivityAuto: true,
+    inputMode: "voice-activity",
+    pushToTalkKey: null,
+    toggleMuteKey: null,
+
+    setInputVolume: (volume) => set({ inputVolume: volume }),
+    setInputSensitivity: (sensitivity) => set({ inputSensitivity: sensitivity }),
+    setInputSensitivityAuto: (auto) => set({ isInputSensitivityAuto: auto }),
+    setInputMode: (mode) => set({ inputMode: mode }),
+    setPushToTalkKey: (key) => set({ pushToTalkKey: key }),
+    setToggleMuteKey: (key) => set({ toggleMuteKey: key }),
+
+    setSpeakingUsers: (users) => set({ speakingUsers: users }),
+    updateSpeakingUser: (userId, isSpeaking) => set((state) => ({
+        speakingUsers: {
+            ...state.speakingUsers,
+            [userId]: isSpeaking
+        }
+    })),
+
+    // Presence
+    onlineUsers: new Set<string>(),
+    setOnlineUsers: (userIds: string[]) => set({ onlineUsers: new Set<string>(userIds) }),
+    addOnlineUser: (userId: string) => set((state) => ({ onlineUsers: new Set<string>(state.onlineUsers).add(userId) })),
+    removeOnlineUser: (userId: string) => set((state) => {
+        const newSet = new Set<string>(state.onlineUsers);
+        newSet.delete(userId);
+        return { onlineUsers: newSet };
+    }),
 }));

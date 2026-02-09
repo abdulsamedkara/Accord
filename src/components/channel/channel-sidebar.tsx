@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Hash, Volume2, Plus, Settings, ChevronDown, UserPlus, LogOut, Copy, Check, Mic, MicOff, Video, VideoOff } from "lucide-react";
+import { Hash, Volume2, Plus, Settings, ChevronDown, UserPlus, LogOut, Copy, Check, Mic, MicOff, Video, VideoOff, Headphones, HeadphoneOff } from "lucide-react";
 import { Channel } from "@/types";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,8 +31,6 @@ interface ChannelSidebarProps {
     canManageChannels: boolean;
 }
 
-
-
 export function ChannelSidebar({
     serverName,
     serverId,
@@ -43,8 +41,21 @@ export function ChannelSidebar({
     canManageChannels,
 }: ChannelSidebarProps) {
     const router = useRouter();
-    const { user, clearUser, setActiveVoiceChannelId, voiceStates, isAudioEnabled, isVideoEnabled, toggleAudio, toggleVideo } = useAppStore(); // Get voiceStates from store
-    // const voiceStates = useVoiceState(); // Remove local hook
+    const {
+        user,
+        clearUser,
+        setActiveVoiceChannelId,
+        voiceStates,
+        isAudioEnabled,
+        isVideoEnabled,
+        isDeafened,
+        toggleAudio,
+        toggleVideo,
+        toggleDeafened,
+        speakingUsers,
+        setUserSettingsModalOpen
+    } = useAppStore();
+
     const [showDropdown, setShowDropdown] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [inviteCode, setInviteCode] = useState("");
@@ -138,6 +149,13 @@ export function ChannelSidebar({
                                 Create Channel
                             </button>
                         )}
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-500 hover:bg-[hsl(var(--accent))] transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Log Out
+                        </button>
                     </div>
                 )}
             </div>
@@ -154,6 +172,7 @@ export function ChannelSidebar({
                         onCreateChannel={onCreateChannel}
                         canManageChannels={canManageChannels}
                         icon={Hash}
+                        speakingUsers={{}}
                     />
 
                     {/* Voice Channels */}
@@ -166,6 +185,7 @@ export function ChannelSidebar({
                         canManageChannels={canManageChannels}
                         icon={Volume2}
                         voiceStates={voiceStates}
+                        speakingUsers={speakingUsers}
                     />
                 </div>
             </ScrollArea>
@@ -200,6 +220,20 @@ export function ChannelSidebar({
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <button
+                                    onClick={toggleDeafened}
+                                    className="p-1.5 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                                >
+                                    {isDeafened ? <HeadphoneOff className="w-4 h-4 text-red-500" /> : <Headphones className="w-4 h-4" />}
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isDeafened ? "Undeafen" : "Deafen"}</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
+                    <TooltipProvider delayDuration={0}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
                                     onClick={toggleVideo}
                                     className="p-1.5 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
                                 >
@@ -215,7 +249,7 @@ export function ChannelSidebar({
                             <TooltipTrigger asChild>
                                 <button
                                     onClick={handleLogout}
-                                    className="p-1.5 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-red-400 transition-colors"
+                                    className="p-1.5 rounded hover:bg-[hsl(var(--accent))] text-[hsl(var(--muted-foreground))] hover:text-red-500 transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" />
                                 </button>
@@ -248,7 +282,7 @@ export function ChannelSidebar({
                                     value={`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${inviteCode}`}
                                     className="flex-1 px-3 py-2 bg-[hsl(var(--input))] rounded-md text-sm"
                                 />
-                                <Button onClick={handleCopyInvite} variant="discord">
+                                <Button onClick={handleCopyInvite} variant="default">
                                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                 </Button>
                             </div>
@@ -274,6 +308,7 @@ interface ChannelSectionProps {
     canManageChannels: boolean;
     icon: React.ComponentType<{ className?: string }>;
     voiceStates?: Record<string, any[]>;
+    speakingUsers?: Record<string, boolean>;
 }
 
 function ChannelSection({
@@ -285,6 +320,7 @@ function ChannelSection({
     canManageChannels,
     icon: Icon,
     voiceStates,
+    speakingUsers = {},
 }: ChannelSectionProps) {
     return (
         <div className="mb-4">
@@ -316,31 +352,51 @@ function ChannelSection({
                             onClick={() => onChannelClick(channel.id)}
                             className={cn(
                                 "channel-item w-full group mb-1",
-                                currentChannelId === channel.id && "active"
+                                "flex items-center gap-2 px-2 py-1 rounded-md transition-colors",
+                                "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] hover:text-[hsl(var(--foreground))]",
+                                currentChannelId === channel.id && "bg-[hsl(var(--accent))] text-[hsl(var(--foreground))]"
                             )}
                         >
-                            <Icon className="w-5 h-5 flex-shrink-0" />
-                            <span className="truncate">{channel.name}</span>
+                            <Icon className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate font-medium">{channel.name}</span>
                             {canManageChannels && (
-                                <Settings className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <Settings className="w-3.5 h-3.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                             )}
                         </button>
 
                         {/* Display Voice Participants */}
                         {voiceStates && voiceStates[channel.id] && voiceStates[channel.id].length > 0 && (
-                            <div className="pl-8 pb-2 space-y-1">
+                            <div className="pl-6 pb-1 space-y-0.5 mt-1">
                                 {voiceStates[channel.id].map((user: any) => (
-                                    <div key={user.userId} className="flex items-center gap-2 group/user cursor-pointer p-1 rounded hover:bg-[hsl(var(--accent))]">
-                                        <div className="w-6 h-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-white text-[10px] ring-2 ring-[hsl(var(--background))]">
+                                    <div key={user.userId} className="flex items-center gap-2 group/user cursor-pointer p-1 rounded hover:bg-[hsl(var(--accent)/50)]">
+                                        <div className={cn(
+                                            "relative w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] transition-all",
+                                            user.avatar ? "" : "bg-[hsl(var(--primary))]",
+                                            speakingUsers && speakingUsers[user.userId] && "ring-2 ring-green-500 shadow-[0_0_10px_rgba(34,197,94,0.7)]"
+                                        )}>
                                             {user.avatar ? (
                                                 <img src={user.avatar} alt={user.username} className="w-full h-full rounded-full object-cover" />
                                             ) : (
                                                 user.username.charAt(0).toUpperCase()
                                             )}
                                         </div>
-                                        <span className="text-sm font-medium text-[hsl(var(--muted-foreground))] group-hover/user:text-[hsl(var(--foreground))] truncate">
+                                        <span className={cn(
+                                            "text-xs font-medium text-[hsl(var(--muted-foreground))] group-hover/user:text-[hsl(var(--foreground))] truncate",
+                                            speakingUsers && speakingUsers[user.userId] && "text-[hsl(var(--foreground))]"
+                                        )}>
                                             {user.username}
                                         </span>
+                                        <div className="flex items-center gap-0.5 ml-auto">
+                                            {user.isMuted && (
+                                                <MicOff className="w-3 h-3 text-red-500" />
+                                            )}
+                                            {user.isDeafened && (
+                                                <HeadphoneOff className="w-3 h-3 text-red-500" />
+                                            )}
+                                            {user.isCameraOn && (
+                                                <Video className="w-3 h-3 text-[hsl(var(--primary))]" />
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>

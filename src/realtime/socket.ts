@@ -4,11 +4,33 @@ import { io, Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
 
-export const getSocket = () => {
+export const getSocket = (userId?: string) => {
+    // If socket exists but we want to upgrade to authenticated (or switch user)
+    if (socket && userId) {
+        const currentQuery = socket.io.opts.query;
+        // socket.io opts.query can be string or object. handling object here.
+        const currentUserId = typeof currentQuery === 'object' ? currentQuery?.userId : undefined;
+
+        if (currentUserId !== userId) {
+            console.log("[Socket] Switching user, disconnecting old socket");
+            socket.disconnect();
+            socket = null;
+        }
+    }
+
     if (!socket) {
         socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000", {
             path: "/api/socket/io",
             addTrailingSlash: false,
+            query: userId ? { userId } : undefined,
+        });
+
+        socket.on("connect", () => {
+            console.log("[Socket] Connected", socket?.id);
+        });
+
+        socket.on("disconnect", () => {
+            console.log("[Socket] Disconnected");
         });
     }
     return socket;
@@ -40,6 +62,10 @@ export interface SocketEvents {
     // Connection
     connect: () => void;
     disconnect: () => void;
+
+    // Presence
+    "presence:state": (data: { onlineUsers: string[] }) => void;
+    "presence:update": (data: { userId: string; isOnline: boolean }) => void;
 }
 
 interface SocketMessage {

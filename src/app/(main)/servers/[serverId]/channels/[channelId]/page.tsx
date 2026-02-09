@@ -10,8 +10,10 @@ import { MessageList } from "@/components/chat/message-list";
 import { ChatInput } from "@/components/chat/chat-input";
 import { TypingIndicator } from "@/components/chat/typing-indicator";
 import { MediaRoom } from "@/components/media-room";
+import { ServerMemberSidebar } from "@/components/server/server-member-sidebar";
 import { useSocketMessages } from "@/realtime/hooks";
 import { MessageWithUser, ServerWithMembers, Channel } from "@/types";
+import { Loader2 } from "lucide-react";
 
 interface ChannelPageProps {
     params: Promise<{
@@ -79,7 +81,7 @@ export default function ChannelPage({ params }: ChannelPageProps) {
 
     // If we land on an AUDIO channel page directly, ensure it becomes the active voice channel
     useEffect(() => {
-        if (currentChannel?.type === "AUDIO") {
+        if (currentChannel?.type === "VOICE") {
             const { activeVoiceChannelId, setActiveVoiceChannelId } = useAppStore.getState();
             if (activeVoiceChannelId !== channelId) {
                 setActiveVoiceChannelId(channelId);
@@ -223,12 +225,22 @@ export default function ChannelPage({ params }: ChannelPageProps) {
                 ) : (
                     <div
                         id="channel-video-portal"
-                        className="flex-1 flex items-center justify-center bg-black relative overflow-hidden"
+                        className="flex-1 flex items-center justify-center bg-black/80 relative overflow-hidden"
                     >
-                        <p className="text-zinc-500">Connecting to Voice Channel...</p>
+                        <div className="flex flex-col items-center gap-y-4 animate-in fade-in duration-500">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
+                                <Loader2 className="h-10 w-10 text-indigo-500 animate-spin relative z-10" />
+                            </div>
+                            <p className="text-sm font-medium text-zinc-400 animate-pulse">
+                                Connecting to secure voice...
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
+
+            <ServerMemberSidebar members={currentServer.members} />
 
             <CreateChannelModal
                 open={createChannelOpen}
