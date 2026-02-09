@@ -27,4 +27,4 @@ COPY . .
 EXPOSE 3000
 
 # Default command (overridden in docker-compose for dev)
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
