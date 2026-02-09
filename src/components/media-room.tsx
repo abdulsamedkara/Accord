@@ -119,7 +119,6 @@ export const MediaRoom = ({
             connect={!isDisconnected}
             video={{ resolution: VideoPresets.h1080.resolution }}
             audio={{ echoCancellation: true, noiseSuppression: true, autoGainControl: true }}
-            screenShare={{ resolution: { width: 1920, height: 1080, frameRate: 30 } }}
             onDisconnected={() => {
                 setIsDisconnected(true);
                 if (socket) {
