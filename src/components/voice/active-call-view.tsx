@@ -56,8 +56,6 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
     // Using a simple state sync for track updates
     const [videoTrackRef, setVideoTrackRef] = useState<any>(null);
     const [audioTrackRef, setAudioTrackRef] = useState<any>(null);
-    const [volume, setVolume] = useState(50); // Start at 50%
-    const [audioTrackRef, setAudioTrackRef] = useState<any>(null);
     const [volume, setVolume] = useState(50); // Default volume 50%
 
     useEffect(() => {
@@ -76,17 +74,6 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
                 });
             } else {
                 setVideoTrackRef(null);
-            }
-
-            const audioPub = participant.getTrackPublication(Track.Source.Microphone);
-            if (audioPub && audioPub.track) {
-                setAudioTrackRef({
-                    participant: participant,
-                    source: Track.Source.Microphone,
-                    publication: audioPub
-                });
-            } else {
-                setAudioTrackRef(null);
             }
 
             const audioPub = participant.getTrackPublication(Track.Source.Microphone);
