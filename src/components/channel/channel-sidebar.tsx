@@ -488,14 +488,14 @@ function ChannelSection({
                                                         <span className="flex items-center gap-1">
                                                             <Volume2 className="w-3 h-3" /> Volume
                                                         </span>
-                                                        <span className="text-indigo-400 font-mono">{userVolumes[user.userId] ?? 50}%</span>
+                                                        <span className="text-indigo-400 font-mono">{userVolumes?.[user.userId] ?? 50}%</span>
                                                     </div>
                                                     <Slider
                                                         defaultValue={[50]}
                                                         max={100}
                                                         step={1}
-                                                        value={[userVolumes[user.userId] ?? 50]}
-                                                        onValueChange={(vals) => setUserVolume(user.userId, vals[0])}
+                                                        value={[userVolumes?.[user.userId] ?? 50]}
+                                                        onValueChange={(vals) => setUserVolume?.(user.userId, vals[0])}
                                                         className="w-full"
                                                     />
                                                 </div>
