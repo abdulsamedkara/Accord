@@ -222,6 +222,7 @@ export function ChannelSidebar({
                         canManageChannels={canManageChannels}
                         icon={Hash}
                         speakingUsers={{}}
+                        currentUserId={user?.id}
                     />
 
                     {/* Voice Channels */}
@@ -236,7 +237,9 @@ export function ChannelSidebar({
                         voiceStates={voiceStates}
                         speakingUsers={speakingUsers}
                         userVolumes={useAppStore((state) => state.userVolumes)}
+                        userVolumes={useAppStore((state) => state.userVolumes)}
                         setUserVolume={useAppStore((state) => state.setUserVolume)}
+                        currentUserId={user?.id}
                     />
                 </div>
             </ScrollArea>
@@ -360,6 +363,7 @@ interface ChannelSectionProps {
     icon: React.ComponentType<{ className?: string }>;
     voiceStates?: Record<string, any[]>;
     speakingUsers?: Record<string, boolean>;
+    currentUserId?: string;
 }
 
 function ChannelSection({
@@ -374,6 +378,7 @@ function ChannelSection({
     speakingUsers = {},
     userVolumes,
     setUserVolume,
+    currentUserId,
 }: ChannelSectionProps & { userVolumes?: Record<string, number>, setUserVolume?: (id: string, vol: number) => void }) {
     return (
         <div className="mb-4">
@@ -531,34 +536,36 @@ function ChannelSection({
                                                     </div>
 
                                                     {/* Volume Control */}
-                                                    <div className="space-y-3 pt-2">
-                                                        <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
-                                                            <span className="flex items-center gap-2">
-                                                                <Volume2 className="w-4 h-4 text-zinc-300" />
-                                                                User Volume
-                                                            </span>
-                                                            <span className="text-indigo-400 font-mono bg-indigo-500/10 px-1.5 py-0.5 rounded">
-                                                                {userVolumes?.[user.userId] ?? 50}%
-                                                            </span>
-                                                        </div>
+                                                    {user.userId !== currentUserId && (
+                                                        <div className="space-y-3 pt-2">
+                                                            <div className="flex items-center justify-between text-xs font-medium text-zinc-400">
+                                                                <span className="flex items-center gap-2">
+                                                                    <Volume2 className="w-4 h-4 text-zinc-300" />
+                                                                    User Volume
+                                                                </span>
+                                                                <span className="text-indigo-400 font-mono bg-indigo-500/10 px-1.5 py-0.5 rounded">
+                                                                    {userVolumes?.[user.userId] ?? 50}%
+                                                                </span>
+                                                            </div>
 
-                                                        {/* Custom Slider Container to ensure visibility */}
-                                                        <div className="px-1 py-1">
-                                                            <SliderPrimitive.Root
-                                                                defaultValue={[50]}
-                                                                max={100}
-                                                                step={1}
-                                                                value={[userVolumes?.[user.userId] ?? 50]}
-                                                                onValueChange={(vals) => setUserVolume?.(user.userId, vals[0])}
-                                                                className="relative flex w-full touch-none select-none items-center py-2 cursor-pointer"
-                                                            >
-                                                                <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-zinc-700/50">
-                                                                    <SliderPrimitive.Range className="absolute h-full bg-indigo-500" />
-                                                                </SliderPrimitive.Track>
-                                                                <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-indigo-500 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-lg shadow-indigo-500/50" />
-                                                            </SliderPrimitive.Root>
+                                                            {/* Custom Slider Container to ensure visibility */}
+                                                            <div className="px-1 py-1">
+                                                                <SliderPrimitive.Root
+                                                                    defaultValue={[50]}
+                                                                    max={100}
+                                                                    step={1}
+                                                                    value={[userVolumes?.[user.userId] ?? 50]}
+                                                                    onValueChange={(vals) => setUserVolume?.(user.userId, vals[0])}
+                                                                    className="relative flex w-full touch-none select-none items-center py-2 cursor-pointer"
+                                                                >
+                                                                    <SliderPrimitive.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-zinc-700/50">
+                                                                        <SliderPrimitive.Range className="absolute h-full bg-indigo-500" />
+                                                                    </SliderPrimitive.Track>
+                                                                    <SliderPrimitive.Thumb className="block h-4 w-4 rounded-full border-2 border-indigo-500 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-lg shadow-indigo-500/50" />
+                                                                </SliderPrimitive.Root>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </PopoverContent>
