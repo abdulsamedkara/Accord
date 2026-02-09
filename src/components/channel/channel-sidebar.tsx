@@ -237,7 +237,6 @@ export function ChannelSidebar({
                         voiceStates={voiceStates}
                         speakingUsers={speakingUsers}
                         userVolumes={useAppStore((state) => state.userVolumes)}
-                        userVolumes={useAppStore((state) => state.userVolumes)}
                         setUserVolume={useAppStore((state) => state.setUserVolume)}
                         currentUserId={user?.id}
                     />
