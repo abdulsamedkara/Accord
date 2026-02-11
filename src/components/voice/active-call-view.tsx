@@ -138,7 +138,10 @@ const ParticipantTile = ({ participant, className, mini = false }: ParticipantTi
             {!isCameraOff && videoTrackRef ? (
                 <VideoTrack
                     trackRef={videoTrackRef}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className={cn(
+                        "w-full h-full object-cover transition-transform duration-500 group-hover:scale-105",
+                        participant.isLocal && "scale-x-[-1]"
+                    )}
                 />
             ) : (
                 /* Avatar / No Video Fallback */

@@ -46,5 +46,14 @@ next-env.d.ts
 /dist-electron
 /dist
 /dist-packager
+/dist-build
+/dist-setup
+/dist-release
 /electron-builder-cache
+winCodeSign.7z
 
+# Build logs
+*.log
+build_error_log.txt
+debug_build.log
+final_build.log

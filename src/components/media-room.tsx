@@ -6,6 +6,7 @@ import "@livekit/components-styles";
 import { useAppStore } from "@/store";
 import { useSocket } from "@/realtime/hooks";
 import { Loader2, WifiOff } from "lucide-react";
+import { ScreenSharePicker } from "@/components/voice/screen-share-picker";
 
 interface MediaRoomProps {
     chatId: string;
@@ -137,7 +138,9 @@ export const MediaRoom = ({
             </div>
 
             {/* Global Audio Renderer Removed - Handled individually in ParticipantTile for volume control */}
+            {/* Global Audio Renderer Removed - Handled individually in ParticipantTile for volume control */}
             <MediaController chatId={chatId} />
+            <ScreenSharePicker />
         </LiveKitRoom>
     );
 };

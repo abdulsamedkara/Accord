@@ -1,6 +1,6 @@
 {
   "name": "accord",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "private": true,
   "main": "dist-electron/main.js",
   "author": "Accord Team",
@@ -33,8 +33,15 @@
     },
     "win": {
       "target": "nsis",
+      "icon": "resources/icon.ico",
       "forceCodeSigning": false
     },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://accord-production-fa47.up.railway.app/updates"
+      }
+    ],
     "linux": {
       "target": "AppImage"
     },
@@ -60,6 +67,7 @@
     "clsx": "^2.1.1",
     "cookies-next": "^6.1.1",
     "date-fns": "^4.1.0",
+    "electron-updater": "^6.7.3",
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.3",
     "livekit-client": "^2.17.1",
@@ -88,6 +96,7 @@
     "cross-env": "^10.1.0",
     "electron": "^40.3.0",
     "electron-builder": "^26.7.0",
+    "electron-installer-windows": "^3.0.0",
     "electron-packager": "^17.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",

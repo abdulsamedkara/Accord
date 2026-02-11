@@ -1,114 +1,324 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, shell, net, desktopCapturer, ipcMain } from "electron";
 import path from "path";
+import fs from "fs";
+import { execFile } from "child_process";
+import os from "os";
 
-// Define the URLs
+// ─── Config ──────────────────────────────────────────────
 const DEV_URL = "http://localhost:3000";
-// TODO: Replace with your actual production URL when deployed
-const PROD_URL = "https://accord-production-fa47.up.railway.app/";
-
+const PROD_URL = "https://accord-production-fa47.up.railway.app";
 const isDev = !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
+let splashWindow: BrowserWindow | null = null;
 
-function createWindow() {
+// ─── Splash Screen ──────────────────────────────────────
+function createSplashWindow() {
+    splashWindow = new BrowserWindow({
+        width: 300,
+        height: 350,
+        frame: false,
+        transparent: true,
+        resizable: false,
+        center: true,
+        alwaysOnTop: true,
+        skipTaskbar: false,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+        },
+        icon: path.join(__dirname, "..", "resources", "icon.ico"),
+    });
+
+    splashWindow.loadFile(path.join(__dirname, "splash.html"));
+
+    splashWindow.on("closed", () => {
+        splashWindow = null;
+    });
+}
+
+function updateSplashStatus(status: string) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.webContents.executeJavaScript(
+            `document.getElementById('status').textContent = '${status}';`
+        );
+    }
+}
+
+function updateSplashProgress(percent: number) {
+    if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.webContents.executeJavaScript(`
+            const bar = document.getElementById('progressBar');
+            const fill = document.getElementById('progressFill');
+            bar.classList.remove('indeterminate');
+            fill.style.width = '${percent}%';
+        `);
+    }
+}
+
+function closeSplashAndShowMain() {
+    createMainWindow();
+    // Wait for main window to be ready before closing splash
+    if (mainWindow) {
+        mainWindow.once("ready-to-show", () => {
+            if (splashWindow && !splashWindow.isDestroyed()) {
+                splashWindow.close();
+            }
+        });
+    }
+}
+
+// ─── Main Window ─────────────────────────────────────────
+function createMainWindow() {
     mainWindow = new BrowserWindow({
         width: 1280,
         height: 800,
         title: "Accord",
+        show: false, // Don't show until ready
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            // preload: path.join(__dirname, "preload.js"), 
+            preload: path.join(__dirname, "preload.js"),
         },
         autoHideMenuBar: true,
-        backgroundColor: "#313338", // Discord-like dark background
-        // titleBarStyle: "hidden", // Commented out to restore standard window frame for dragging
-        // titleBarOverlay: {
-        //     color: '#1e1f22',
-        //     symbolColor: '#b5bac1'
-        // }
+        backgroundColor: "#313338",
+        icon: path.join(__dirname, "..", "resources", "icon.ico"),
     });
 
-    // In development: Load the local running server
-    // In production: Load the remote URL (Client Mode) to ensure sync with web users
     const url = isDev ? DEV_URL : PROD_URL;
-
     console.log(`Loading URL: ${url}`);
-    mainWindow.loadURL(url).catch(err => {
+    mainWindow.loadURL(url).catch((err) => {
         console.error("Failed to load URL:", err);
     });
 
-    // Open external links in default browser, not Electron
+    // Handle Screen Share Requests
+    mainWindow.webContents.session.setDisplayMediaRequestHandler((request: any, callback: any) => {
+        const { video, audio } = request;
+
+        desktopCapturer.getSources({ types: ['screen', 'window'] }).then((sources: any[]) => {
+            // Send sources to renderer to show picker
+            mainWindow?.webContents.send("GET_SOURCES", sources);
+
+            // Listen for selection from renderer
+            ipcMain.once("SOURCE_SELECTED", (_event: any, sourceId: any) => {
+                if (!sourceId) {
+                    // User cancelled
+                    callback({});
+                    return;
+                }
+
+                // Select the source
+                const source = sources.find((s: any) => s.id === sourceId);
+                if (!source) {
+                    callback({});
+                    return;
+                }
+
+                // Return the stream
+                callback({ video: source, audio: 'loopback' });
+            });
+        }).catch((err: any) => {
+            console.error("Error getting sources:", err);
+            callback({});
+        });
+    });
+
+    mainWindow.once("ready-to-show", () => {
+        mainWindow!.show();
+    });
+
+    // Open external links in default browser
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-        if (url.startsWith("http:")) {
+        if (url.startsWith("http:") || url.startsWith("https:")) {
             shell.openExternal(url);
             return { action: "deny" };
         }
         return { action: "allow" };
     });
 
-    if (isDev) {
-        // Open DevTools in development
-        // mainWindow.webContents.openDevTools();
-    }
-
     mainWindow.on("closed", () => {
         mainWindow = null;
     });
 }
 
+// ─── Auto Update System ─────────────────────────────────
+function checkForUpdates(): Promise<boolean> {
+    return new Promise((resolve) => {
+        if (isDev) {
+            resolve(false);
+            return;
+        }
 
-import { net, dialog } from "electron";
+        const request = net.request(`${PROD_URL}/api/app-version`);
 
-function checkForUpdates() {
-    if (isDev) return; // Don't check in dev mode
+        request.on("response", (response) => {
+            let data = "";
+            response.on("data", (chunk) => {
+                data += chunk;
+            });
 
-    const request = net.request(`${PROD_URL}/api/app-version`);
+            response.on("end", () => {
+                try {
+                    const remoteInfo = JSON.parse(data);
+                    const currentVersion = app.getVersion();
 
-    request.on('response', (response) => {
-        let data = '';
-        response.on('data', (chunk) => {
-            data += chunk;
+                    if (
+                        remoteInfo.version &&
+                        remoteInfo.version !== currentVersion &&
+                        remoteInfo.downloadUrl
+                    ) {
+                        console.log(
+                            `Update available: ${currentVersion} -> ${remoteInfo.version}`
+                        );
+                        updateSplashStatus("Güncelleme bulundu!");
+                        downloadAndInstallUpdate(
+                            remoteInfo.downloadUrl,
+                            remoteInfo.version
+                        );
+                        // Don't resolve - the app will restart after install
+                    } else {
+                        console.log("App is up to date.");
+                        resolve(false);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse version info", e);
+                    resolve(false);
+                }
+            });
         });
 
-        response.on('end', () => {
-            try {
-                const remoteInfo = JSON.parse(data);
-                const currentVersion = app.getVersion();
+        request.on("error", (err) => {
+            console.error("Update check failed", err);
+            resolve(false);
+        });
 
-                // transform "1.0.0" -> number approximation or use semver lib if available.
-                // Simple string comparison for now, or just not equal.
-                if (remoteInfo.version !== currentVersion) {
-                    dialog.showMessageBox(mainWindow!, {
-                        type: 'info',
-                        title: 'Update Available',
-                        message: `A new version (${remoteInfo.version}) of the Accord Desktop App is available.`,
-                        detail: 'Your current version is ' + currentVersion + '. Please download the latest version to get new features.',
-                        buttons: ['Download', 'Later'],
-                        defaultId: 0
-                    }).then(({ response }) => {
-                        if (response === 0) {
-                            shell.openExternal(remoteInfo.downloadUrl || PROD_URL);
-                        }
-                    });
-                }
-            } catch (e) {
-                console.error("Failed to parse version info", e);
+        request.end();
+    });
+}
+
+function downloadAndInstallUpdate(url: string, version: string) {
+    const tempPath = path.join(os.tmpdir(), `Accord-Setup-${version}.exe`);
+
+    // If already downloaded, install directly
+    if (fs.existsSync(tempPath)) {
+        const stats = fs.statSync(tempPath);
+        if (stats.size > 1000000) {
+            // Make sure file is > 1MB (not corrupted)
+            console.log("Update already downloaded, installing...");
+            updateSplashStatus("Güncelleme yükleniyor...");
+            updateSplashProgress(100);
+            setTimeout(() => runInstaller(tempPath), 500);
+            return;
+        }
+        fs.unlinkSync(tempPath); // Remove corrupted file
+    }
+
+    console.log(`Downloading update from: ${url}`);
+    updateSplashStatus("Güncelleme indiriliyor...");
+
+    const request = net.request(url);
+
+    request.on("response", (response) => {
+        // Handle redirects (GitHub releases use redirects)
+        if (response.statusCode === 302 || response.statusCode === 301) {
+            const redirectUrl = response.headers["location"];
+            if (redirectUrl) {
+                const actualUrl = Array.isArray(redirectUrl)
+                    ? redirectUrl[0]
+                    : redirectUrl;
+                downloadAndInstallUpdate(actualUrl, version);
+                return;
             }
+        }
+
+        if (response.statusCode !== 200) {
+            console.error(`Download failed with status: ${response.statusCode}`);
+            updateSplashStatus("Güncelleme başarısız, uygulama açılıyor...");
+            setTimeout(() => closeSplashAndShowMain(), 1500);
+            return;
+        }
+
+        const contentLength = parseInt(
+            (response.headers["content-length"] as string) || "0",
+            10
+        );
+        let downloaded = 0;
+        const fileStream = fs.createWriteStream(tempPath);
+
+        response.on("data", (chunk) => {
+            fileStream.write(chunk);
+            downloaded += chunk.length;
+            if (contentLength > 0) {
+                const percent = Math.round((downloaded / contentLength) * 100);
+                updateSplashProgress(percent);
+                updateSplashStatus(`İndiriliyor... %${percent}`);
+            }
+        });
+
+        response.on("end", () => {
+            fileStream.end(() => {
+                console.log("Update downloaded successfully.");
+                updateSplashStatus("Güncelleme yükleniyor...");
+                updateSplashProgress(100);
+                setTimeout(() => runInstaller(tempPath), 500);
+            });
+        });
+
+        response.on("error", (err) => {
+            console.error("Download error:", err);
+            fileStream.close();
+            try { fs.unlinkSync(tempPath); } catch { }
+            updateSplashStatus("İndirme hatası, uygulama açılıyor...");
+            setTimeout(() => closeSplashAndShowMain(), 1500);
         });
     });
 
-    request.on('error', (err) => {
-        console.error("Update check failed", err);
+    request.on("error", (err) => {
+        console.error("Download request failed", err);
+        updateSplashStatus("Bağlantı hatası, uygulama açılıyor...");
+        setTimeout(() => closeSplashAndShowMain(), 1500);
     });
 
     request.end();
 }
 
-app.on("ready", () => {
-    createWindow();
-    // Check for updates after a short delay
-    setTimeout(checkForUpdates, 3000);
+function runInstaller(installerPath: string) {
+    console.log("Running silent installer...");
+    updateSplashStatus("Yükleniyor, uygulama yeniden başlatılacak...");
+
+    execFile(
+        installerPath,
+        ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS"],
+        (err) => {
+            if (err) {
+                console.error("Installer failed:", err);
+            }
+        }
+    );
+
+    // Quit the current app so the installer can replace files
+    setTimeout(() => {
+        app.quit();
+    }, 1500);
+}
+
+// ─── App Lifecycle ───────────────────────────────────────
+app.on("ready", async () => {
+    createSplashWindow();
+
+    // Wait a moment for splash to render, then check updates
+    setTimeout(async () => {
+        updateSplashStatus("Güncelleme kontrol ediliyor...");
+
+        const noUpdate = await checkForUpdates();
+
+        if (noUpdate === false) {
+            // No update found or error — open main app
+            updateSplashStatus("Accord başlatılıyor...");
+            setTimeout(() => closeSplashAndShowMain(), 800);
+        }
+        // If update is found, downloadAndInstallUpdate handles the rest
+    }, 1500);
 });
 
 app.on("window-all-closed", () => {
@@ -119,6 +329,6 @@ app.on("window-all-closed", () => {
 
 app.on("activate", () => {
     if (mainWindow === null) {
-        createWindow();
+        createMainWindow();
     }
 });
