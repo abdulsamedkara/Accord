@@ -52,9 +52,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#1a1b1e]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#5865F2] to-[#7289da] flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
+            <img src="/favicon.ico" alt="Accord" className="w-9 h-9 rounded-xl" />
             <span className="text-xl font-bold">Accord</span>
           </div>
 
@@ -191,9 +189,7 @@ export default function LandingPage() {
       <footer className="border-t border-white/5 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#5865F2] to-[#7289da] flex items-center justify-center">
-              <span className="text-white font-bold text-xs">A</span>
-            </div>
+            <img src="/favicon.ico" alt="Accord" className="w-6 h-6 rounded-md" />
             <span>Accord © 2026</span>
           </div>
           <div className="flex gap-6">
