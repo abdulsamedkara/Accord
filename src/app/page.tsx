@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageSquare, Headphones, MonitorUp, Shield, Download, ArrowRight, Users, Zap } from "lucide-react";
+import { MessageSquare, Headphones, MonitorUp, Shield, Download, ArrowRight, Users } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1b1e] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#1a1b1e] text-white">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#1a1b1e]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -82,11 +82,6 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#5865F2]/10 rounded-full blur-[128px] pointer-events-none" />
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#5865F2]/10 border border-[#5865F2]/20 text-[#7289da] text-sm font-medium mb-8">
-            <Zap className="w-3.5 h-3.5" />
-            v1.0.1 — Ekran Paylaşımı Eklendi
-          </div>
-
           <h1 className="text-5xl sm:text-7xl font-extrabold leading-tight mb-6">
             <span className="bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent">
               Arkadaşlarınla

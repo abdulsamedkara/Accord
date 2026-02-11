@@ -75,27 +75,30 @@ export const MediaRoom = ({
 
     if (isDisconnected) {
         return (
-            <div className="flex flex-col flex-1 justify-center items-center bg-zinc-950/80 backdrop-blur-sm p-4 text-center">
-                <div className="bg-zinc-900/50 border border-zinc-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full mx-auto flex flex-col items-center animate-in fade-in zoom-in-95 duration-300">
-                    <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6 ring-1 ring-red-500/20">
-                        <Loader2 className="h-8 w-8 text-red-500 mb-0.5 ml-0.5" />
+            <div className="flex flex-col flex-1 justify-center items-center bg-[#1e1f22] p-4">
+                <div className="flex flex-col items-center max-w-xs w-full text-center">
+                    {/* Animated disconnected icon */}
+                    <div className="relative mb-8">
+                        <div className="w-20 h-20 rounded-full bg-[#2b2d31] flex items-center justify-center">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M16.5 12A4.5 4.5 0 0 0 12 7.5M20 12a8 8 0 0 0-8-8" stroke="#5865F2" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
+                                <path d="M4.93 4.93l14.14 14.14" stroke="#ed4245" strokeWidth="2.5" strokeLinecap="round" />
+                                <circle cx="12" cy="12" r="2" fill="#b5bac1" />
+                            </svg>
+                        </div>
                     </div>
 
-                    <h2 className="text-xl font-bold text-white mb-2">Voice Disconnected</h2>
-                    <p className="text-zinc-400 mb-8 text-sm leading-relaxed">
-                        You've left the voice channel. <br /> Click below to rejoin the conversation.
+                    <h2 className="text-[22px] font-bold text-white mb-2">Ses Bağlantısı Kesildi</h2>
+                    <p className="text-[#b5bac1] mb-8 text-sm leading-relaxed">
+                        Ses kanalından ayrıldınız.
                     </p>
 
                     <button
                         onClick={handleRejoin}
-                        className="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-medium rounded-xl transition-all shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98] outline-none ring-offset-2 ring-offset-zinc-900 focus:ring-2 focus:ring-indigo-500"
+                        className="w-full py-2.5 px-4 bg-[#5865F2] hover:bg-[#4752c4] text-white text-sm font-medium rounded-[4px] transition-colors"
                     >
-                        Rejoin Voice Channel
+                        Yeniden Bağlan
                     </button>
-
-                    <p className="mt-6 text-xs text-zinc-500">
-                        Connection stopped · {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
                 </div>
             </div>
         );
