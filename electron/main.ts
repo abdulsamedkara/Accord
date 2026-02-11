@@ -92,10 +92,9 @@ function createMainWindow() {
     });
 
     // Handle Screen Share Requests
-    mainWindow.webContents.session.setDisplayMediaRequestHandler((request: any, callback: any) => {
-        const { video, audio } = request;
+    mainWindow.webContents.session.setDisplayMediaRequestHandler((_request: any, callback: any) => {
 
-        desktopCapturer.getSources({ types: ['screen', 'window'] }).then((sources: any[]) => {
+        desktopCapturer.getSources({ types: ['screen', 'window'], thumbnailSize: { width: 320, height: 180 } }).then((sources: any[]) => {
             // Serialize NativeImage objects to data URLs before sending over IPC
             const serializedSources = sources.map((source: any) => ({
                 id: source.id,
@@ -110,24 +109,24 @@ function createMainWindow() {
             // Listen for selection from renderer
             ipcMain.once("SOURCE_SELECTED", (_event: any, sourceId: any) => {
                 if (!sourceId) {
-                    // User cancelled
-                    callback({});
+                    // User cancelled — deny the request
+                    callback(null);
                     return;
                 }
 
-                // Select the source
+                // Select the original source (not serialized)
                 const source = sources.find((s: any) => s.id === sourceId);
                 if (!source) {
-                    callback({});
+                    callback(null);
                     return;
                 }
 
-                // Return the stream
-                callback({ video: source, audio: 'loopback' });
+                // Provide the selected source to Electron
+                callback({ video: source });
             });
         }).catch((err: any) => {
             console.error("Error getting sources:", err);
-            callback({});
+            callback(null);
         });
     });
 
