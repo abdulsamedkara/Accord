@@ -7,38 +7,38 @@
   --discord-yellow: #FEE75C;
   --discord-fuchsia: #EB459E;
   --discord-red: #ED4245;
-  
+
   /* Dark theme (default) */
   --background: 223 6.5% 12%;
   --foreground: 210 40% 98%;
-  
+
   --card: 222 6.3% 14%;
   --card-foreground: 210 40% 98%;
-  
+
   --popover: 222.2 47.4% 11.2%;
   --popover-foreground: 210 40% 98%;
-  
+
   --primary: 235 85.6% 64.7%;
   --primary-foreground: 210 40% 98%;
-  
+
   --secondary: 223 6.3% 18%;
   --secondary-foreground: 210 40% 98%;
-  
+
   --muted: 223 5.9% 25%;
   --muted-foreground: 215.4 16.3% 56.9%;
-  
+
   --accent: 223 6.3% 20%;
   --accent-foreground: 210 40% 98%;
-  
+
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
-  
+
   --border: 223 6.3% 22%;
   --input: 223 6.3% 22%;
   --ring: 235 85.6% 64.7%;
-  
+
   --radius: 0.5rem;
-  
+
   /* Sidebar specific colors */
   --sidebar-bg: 223 6.9% 10%;
   --sidebar-hover: 223 6.3% 15%;
@@ -81,6 +81,7 @@ body {
     transform: scale(0.95);
     opacity: 0.5;
   }
+
   100% {
     transform: scale(1.05);
     opacity: 0;
@@ -92,6 +93,7 @@ body {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -104,7 +106,7 @@ body {
 
 /* Discord-like server icon styling */
 .server-icon {
-  @apply w-12 h-12 rounded-[24px] bg-[hsl(var(--secondary))] flex items-center justify-center transition-all duration-200 cursor-pointer;
+  @apply w-12 h-12 rounded-[24px] bg-[hsl(var(--secondary))] flex items-center justify-center transition-all duration-200 cursor-pointer app-no-drag;
 }
 
 .server-icon:hover {
@@ -136,15 +138,20 @@ body {
 
 /* Typing indicator animation */
 @keyframes typing-dot {
-  0%, 20% {
+
+  0%,
+  20% {
     opacity: 0.3;
     transform: translateY(0);
   }
+
   50% {
     opacity: 1;
     transform: translateY(-2px);
   }
-  80%, 100% {
+
+  80%,
+  100% {
     opacity: 0.3;
     transform: translateY(0);
   }
@@ -161,4 +168,13 @@ body {
 
 .typing-dot:nth-child(3) {
   animation-delay: 0.4s;
+}
+
+/* Electron Window Dragging */
+.app-drag {
+  -webkit-app-region: drag;
+}
+
+.app-no-drag {
+  -webkit-app-region: no-drag;
 }

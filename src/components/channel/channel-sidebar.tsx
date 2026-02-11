@@ -154,6 +154,9 @@ export function ChannelSidebar({
 
     return (
         <div className="flex flex-col w-60 h-full bg-[hsl(var(--channel-bg))]">
+            {/* Window Drag Handle (Invisible strip at top) */}
+            <div className="h-4 w-full app-drag absolute top-0 left-0 z-50" />
+
             {/* Server header with dropdown */}
             <div className="relative">
                 <button
@@ -425,9 +428,9 @@ function ChannelSection({
                         {voiceStates && voiceStates[channel.id] && voiceStates[channel.id].length > 0 && (
                             <div className="pl-6 pb-1 space-y-0.5 mt-1">
                                 {voiceStates[channel.id].map((user: any) => (
-                                    <Popover>
+                                    <Popover key={user.userId}>
                                         <PopoverTrigger asChild>
-                                            <div key={user.userId} className="flex items-center gap-2 group/user cursor-pointer p-1 rounded hover:bg-[hsl(var(--accent)/50)] relative">
+                                            <div className="flex items-center gap-2 group/user cursor-pointer p-1 rounded hover:bg-[hsl(var(--accent)/50)] relative">
                                                 <div className={cn(
                                                     "relative w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] transition-all",
                                                     user.avatar ? "" : "bg-[hsl(var(--primary))]",

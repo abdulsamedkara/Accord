@@ -29,7 +29,7 @@ export function ServerSidebar({
     const { setUserSettingsModalOpen } = useAppStore();
 
     return (
-        <div className="flex flex-col items-center w-[72px] h-full py-3 bg-[hsl(var(--sidebar-bg))]">
+        <div className="flex flex-col items-center w-[72px] h-full py-3 bg-[hsl(var(--sidebar-bg))] app-drag">
             <TooltipProvider delayDuration={0}>
                 {/* Home / DM button (Disabled) */}
                 <Tooltip>

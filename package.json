@@ -2,6 +2,9 @@
   "name": "accord",
   "version": "0.1.0",
   "private": true,
+  "main": "dist-electron/main.js",
+  "author": "Accord Team",
+  "description": "A Discord clone for your community",
   "scripts": {
     "dev": "npx tsx server/index.ts",
     "dev:next": "next dev",
@@ -12,7 +15,32 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "build:electron": "tsc -p electron",
+    "electron:dev": "npm run build:electron && concurrently -k \"cross-env BROWSER=none npm run dev\" \"wait-on tcp:3000 && electron .\"",
+    "electron:build": "npm run build:electron && electron-builder",
+    "package:win": "npm run build:electron && electron-packager . Accord --platform=win32 --arch=x64 --out=dist-packager --icon=resources/icon.ico --overwrite"
+  },
+  "build": {
+    "appId": "com.accord.app",
+    "productName": "Accord",
+    "files": [
+      "dist-electron/**/*",
+      "public/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "forceCodeSigning": false
+    },
+    "linux": {
+      "target": "AppImage"
+    },
+    "mac": {
+      "target": "dmg"
+    }
   },
   "dependencies": {
     "@livekit/components-react": "^2.9.19",
@@ -56,11 +84,17 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^40.3.0",
+    "electron-builder": "^26.7.0",
+    "electron-packager": "^17.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^6.0.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^9.0.3"
   }
 }
