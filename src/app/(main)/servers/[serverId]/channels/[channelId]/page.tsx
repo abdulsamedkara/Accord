@@ -223,19 +223,12 @@ export default function ChannelPage({ params }: ChannelPageProps) {
                         />
                     </>
                 ) : (
-                    <div
-                        id="channel-video-portal"
-                        className="flex-1 flex items-center justify-center bg-black/80 relative overflow-hidden"
-                    >
-                        <div className="flex flex-col items-center gap-y-4 animate-in fade-in duration-500">
-                            <div className="relative">
-                                <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-pulse" />
-                                <Loader2 className="h-10 w-10 text-indigo-500 animate-spin relative z-10" />
-                            </div>
-                            <p className="text-sm font-medium text-zinc-400 animate-pulse">
-                                Connecting to secure voice...
-                            </p>
-                        </div>
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        <MediaRoom
+                            chatId={channelId}
+                            video={false}
+                            audio={true}
+                        />
                     </div>
                 )}
             </div>

@@ -311,20 +311,30 @@ function runInstaller(installerPath: string) {
     console.log("Running silent installer...");
     updateSplashStatus("Yükleniyor, uygulama yeniden başlatılacak...");
 
+    const appExePath = process.execPath;
+
     execFile(
         installerPath,
-        ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS"],
+        ["/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CLOSEAPPLICATIONS", "/FORCECLOSEAPPLICATIONS"],
         (err) => {
             if (err) {
                 console.error("Installer failed:", err);
+                return;
             }
+            // Installer finished — relaunch the updated app
+            console.log("Installer completed, relaunching app...");
+            require("child_process").spawn(appExePath, [], {
+                detached: true,
+                stdio: "ignore"
+            }).unref();
+            app.quit();
         }
     );
 
     // Quit the current app so the installer can replace files
     setTimeout(() => {
         app.quit();
-    }, 1500);
+    }, 2000);
 }
 
 // ─── App Lifecycle ───────────────────────────────────────
