@@ -1,7 +1,7 @@
 [Setup]
 AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
 AppName=Accord
-AppVersion=1.0.3
+AppVersion=1.0.4
 AppPublisher=Accord Team
 DefaultDirName={autopf}\Accord
 DefaultGroupName=Accord
