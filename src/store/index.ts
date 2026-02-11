@@ -42,6 +42,8 @@ interface AppState {
     setMobileMenuOpen: (open: boolean) => void;
     isCreateServerModalOpen: boolean;
     setCreateServerModalOpen: (open: boolean) => void;
+    isJoinServerModalOpen: boolean;
+    setJoinServerModalOpen: (open: boolean) => void;
     isCreateChannelModalOpen: boolean;
     setCreateChannelModalOpen: (open: boolean) => void;
     isUserSettingsModalOpen: boolean;
@@ -177,6 +179,8 @@ export const useAppStore = create<AppState>((set) => ({
     setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
     isCreateServerModalOpen: false,
     setCreateServerModalOpen: (open) => set({ isCreateServerModalOpen: open }),
+    isJoinServerModalOpen: false,
+    setJoinServerModalOpen: (open) => set({ isJoinServerModalOpen: open }),
     isCreateChannelModalOpen: false,
     setCreateChannelModalOpen: (open) => set({ isCreateChannelModalOpen: open }),
     isUserSettingsModalOpen: false,

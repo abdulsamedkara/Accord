@@ -6,6 +6,7 @@ import { useAppStore } from "@/store";
 import { getSocket } from "@/realtime/socket";
 import { ServerSidebar } from "@/components/server/server-sidebar";
 import { CreateServerModal } from "@/components/server/create-server-modal";
+import { JoinServerModal } from "@/components/server/join-server-modal";
 import { ActiveVoiceManager } from "@/components/voice/active-voice-manager";
 import { UserSettingsModal } from "@/components/user/user-settings-modal";
 import { SafeUser, ServerWithMembers } from "@/types";
@@ -165,6 +166,7 @@ export default function MainLayout({
                 open={isCreateServerModalOpen}
                 onOpenChange={setCreateServerModalOpen}
             />
+            <JoinServerModal />
             <UserSettingsModal />
             <ActiveVoiceManager />
         </div>
