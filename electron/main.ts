@@ -1,8 +1,28 @@
-import { app, BrowserWindow, shell, net, desktopCapturer, ipcMain } from "electron";
+import { app, BrowserWindow, shell, net, desktopCapturer, ipcMain, Menu } from "electron";
 import path from "path";
 import fs from "fs";
 import { execFile } from "child_process";
 import os from "os";
+
+// Enable Copy/Paste/Cut/...
+const template = [
+    {
+        label: "Edit",
+        submenu: [
+            { role: "undo" },
+            { role: "redo" },
+            { type: "separator" },
+            { role: "cut" },
+            { role: "copy" },
+            { role: "paste" },
+            { role: "delete" },
+            { type: "separator" },
+            { role: "selectAll" },
+        ],
+    },
+];
+const menu = Menu.buildFromTemplate(template as any);
+Menu.setApplicationMenu(menu);
 
 // ─── Config ──────────────────────────────────────────────
 const DEV_URL = "http://localhost:3000";

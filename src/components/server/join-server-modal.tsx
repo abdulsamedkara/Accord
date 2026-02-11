@@ -81,7 +81,7 @@ export function JoinServerModal() {
                                 if (val.includes("/invite/")) {
                                     val = val.split("/invite/")[1];
                                 }
-                                setInviteCode(val);
+                                setInviteCode(val.trim());
                             }}
                         />
                         {error && <p className="text-xs text-red-500">{error}</p>}
