@@ -106,7 +106,8 @@ body {
 
 /* Discord-like server icon styling */
 .server-icon {
-  @apply w-12 h-12 rounded-[24px] bg-[hsl(var(--secondary))] flex items-center justify-center transition-all duration-200 cursor-pointer app-no-drag;
+  @apply w-12 h-12 rounded-[24px] bg-[hsl(var(--secondary))] flex items-center justify-center transition-all duration-200 cursor-pointer;
+  -webkit-app-region: no-drag;
 }
 
 .server-icon:hover {
