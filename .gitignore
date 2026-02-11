@@ -51,6 +51,8 @@ next-env.d.ts
 /dist-release
 /electron-builder-cache
 winCodeSign.7z
+nsis-resources.7z
+nsis.7z
 
 # Build logs
 *.log
