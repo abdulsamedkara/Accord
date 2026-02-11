@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, Settings, Bot } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAppStore } from "@/store";
 import { ServerWithMembers } from "@/types";
 import { cn, getAvatarUrl } from "@/lib/utils";
@@ -27,6 +28,7 @@ export function ServerSidebar({
     onCreateServer,
 }: ServerSidebarProps) {
     const { setUserSettingsModalOpen } = useAppStore();
+    const router = useRouter();
 
     return (
         <div className="flex flex-col items-center w-[72px] h-full py-3 bg-[hsl(var(--sidebar-bg))] app-drag">
@@ -36,15 +38,18 @@ export function ServerSidebar({
                     <TooltipTrigger asChild>
                         <button
                             className={cn(
-                                "server-icon mb-2 cursor-not-allowed opacity-75",
-                                !currentServerId && "active"
+                                "server-icon mb-2",
+                                (!currentServerId && "active") || ""
                             )}
-                        /* onClick={() => onServerClick("")} */
+                            onClick={() => {
+                                // Navigate to /channels/me (Home)
+                                router.push("/channels/me");
+                            }}
                         >
-                            <Bot className="w-7 h-7 text-white" /> {/* Placeholder for App Icon */}
+                            <Bot className="w-7 h-7 text-white" /> {/* Home Icon */}
                         </button>
                     </TooltipTrigger>
-                    <TooltipContent side="right">Direct Messages (Coming Soon)</TooltipContent>
+                    <TooltipContent side="right">Ana Sayfa</TooltipContent>
                 </Tooltip>
 
                 <Separator className="w-8 h-0.5 bg-[hsl(var(--border))] rounded-full mb-2" />

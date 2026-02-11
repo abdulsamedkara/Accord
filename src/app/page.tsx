@@ -29,6 +29,9 @@ export default function LandingPage() {
               return;
             }
           }
+          // Fallback: If no servers or no channels, go to the "Me" page (Create Server UI)
+          router.replace("/channels/me");
+          return;
         }
       } catch {
         // Not authenticated, show landing page
