@@ -28,3 +28,5 @@ Name: "desktopicon"; Description: "Masaüstüne kısayol oluştur enayi mert"; G
 
 [Run]
 Filename: "{app}\Accord.exe"; Description: "Accord'u başlat"; Flags: nowait postinstall skipifsilent
+; Auto-launch after silent update (this runs even if silent)
+Filename: "{app}\Accord.exe"; Flags: nowait; Check: WizardSilent
