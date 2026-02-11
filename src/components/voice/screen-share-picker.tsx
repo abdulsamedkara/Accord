@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -6,18 +8,15 @@ import { cn } from "@/lib/utils";
 interface DesktopCapturerSource {
     id: string;
     name: string;
-    thumbnail: {
-        toDataURL: () => string;
-    };
+    thumbnail: string; // Already converted to data URL string
     display_id: string;
-    appIcon: {
-        toDataURL: () => string;
-    } | null;
+    appIcon: string | null; // Already converted to data URL string
 }
 
 export const ScreenSharePicker = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [sources, setSources] = useState<DesktopCapturerSource[]>([]);
+    const [activeTab, setActiveTab] = useState<"screens" | "windows">("screens");
 
     useEffect(() => {
         // Check if running in Electron with exposed API
@@ -26,6 +25,7 @@ export const ScreenSharePicker = () => {
 
         const handleGetSources = (sources: any[]) => {
             setSources(sources);
+            setActiveTab("screens");
             setIsOpen(true);
         };
 
@@ -62,13 +62,11 @@ export const ScreenSharePicker = () => {
     const screens = sources.filter(s => s.id.startsWith("screen"));
     const windows = sources.filter(s => !s.id.startsWith("screen"));
 
-    const [activeTab, setActiveTab] = useState<"screens" | "windows">("screens");
-
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="max-w-3xl bg-[#313338] border-none text-white p-0 overflow-hidden">
                 <DialogHeader className="p-4 pb-0">
-                    <DialogTitle className="text-xl font-bold">Share your screen</DialogTitle>
+                    <DialogTitle className="text-xl font-bold">Ekran Paylaş</DialogTitle>
                 </DialogHeader>
 
                 <div className="p-4">
@@ -81,7 +79,7 @@ export const ScreenSharePicker = () => {
                                     activeTab === "screens" ? "bg-[#404249] text-white shadow-sm" : "text-gray-400 hover:text-gray-200 hover:bg-[#404249]/50"
                                 )}
                             >
-                                Screens
+                                Ekranlar
                             </button>
                             <button
                                 onClick={() => setActiveTab("windows")}
@@ -90,7 +88,7 @@ export const ScreenSharePicker = () => {
                                     activeTab === "windows" ? "bg-[#404249] text-white shadow-sm" : "text-gray-400 hover:text-gray-200 hover:bg-[#404249]/50"
                                 )}
                             >
-                                Applications
+                                Uygulamalar
                             </button>
                         </div>
 
@@ -105,7 +103,7 @@ export const ScreenSharePicker = () => {
                                         >
                                             <div className="relative aspect-video bg-black rounded-md overflow-hidden mb-2">
                                                 <img
-                                                    src={source.thumbnail.toDataURL()}
+                                                    src={source.thumbnail}
                                                     alt={source.name}
                                                     className="w-full h-full object-contain"
                                                 />
@@ -128,13 +126,13 @@ export const ScreenSharePicker = () => {
                                         >
                                             <div className="relative aspect-video bg-black rounded-md overflow-hidden mb-2 flex items-center justify-center">
                                                 <img
-                                                    src={source.thumbnail.toDataURL()}
+                                                    src={source.thumbnail}
                                                     alt={source.name}
                                                     className="max-w-full max-h-full object-contain"
                                                 />
                                                 {source.appIcon && (
                                                     <div className="absolute bottom-1 right-1 w-6 h-6 bg-transparent">
-                                                        <img src={source.appIcon.toDataURL()} alt="" className="w-full h-full" />
+                                                        <img src={source.appIcon} alt="" className="w-full h-full" />
                                                     </div>
                                                 )}
                                             </div>

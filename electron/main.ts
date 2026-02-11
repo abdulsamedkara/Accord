@@ -96,8 +96,16 @@ function createMainWindow() {
         const { video, audio } = request;
 
         desktopCapturer.getSources({ types: ['screen', 'window'] }).then((sources: any[]) => {
-            // Send sources to renderer to show picker
-            mainWindow?.webContents.send("GET_SOURCES", sources);
+            // Serialize NativeImage objects to data URLs before sending over IPC
+            const serializedSources = sources.map((source: any) => ({
+                id: source.id,
+                name: source.name,
+                thumbnail: source.thumbnail?.toDataURL?.() || "",
+                display_id: source.display_id,
+                appIcon: source.appIcon?.toDataURL?.() || null,
+            }));
+            // Send serialized sources to renderer to show picker
+            mainWindow?.webContents.send("GET_SOURCES", serializedSources);
 
             // Listen for selection from renderer
             ipcMain.once("SOURCE_SELECTED", (_event: any, sourceId: any) => {
@@ -196,6 +204,26 @@ function checkForUpdates(): Promise<boolean> {
     });
 }
 
+let retryCount = 0;
+const MAX_RETRIES = 5;
+
+function retryUpdate(url: string, version: string, seconds: number = 10) {
+    retryCount++;
+    if (retryCount > MAX_RETRIES) {
+        updateSplashStatus("Güncelleme başarısız. Lütfen manuel indirin.");
+        return;
+    }
+    let countdown = seconds;
+    const interval = setInterval(() => {
+        countdown--;
+        updateSplashStatus(`GÜNCELLEME BAŞARISIZ — ${countdown} SN SONRA TEKRAR DENENİYOR`);
+        if (countdown <= 0) {
+            clearInterval(interval);
+            downloadAndInstallUpdate(url, version);
+        }
+    }, 1000);
+}
+
 function downloadAndInstallUpdate(url: string, version: string) {
     const tempPath = path.join(os.tmpdir(), `Accord-Setup-${version}.exe`);
 
@@ -233,8 +261,7 @@ function downloadAndInstallUpdate(url: string, version: string) {
 
         if (response.statusCode !== 200) {
             console.error(`Download failed with status: ${response.statusCode}`);
-            updateSplashStatus("Güncelleme başarısız, uygulama açılıyor...");
-            setTimeout(() => closeSplashAndShowMain(), 1500);
+            retryUpdate(url, version);
             return;
         }
 
@@ -268,15 +295,13 @@ function downloadAndInstallUpdate(url: string, version: string) {
             console.error("Download error:", err);
             fileStream.close();
             try { fs.unlinkSync(tempPath); } catch { }
-            updateSplashStatus("İndirme hatası, uygulama açılıyor...");
-            setTimeout(() => closeSplashAndShowMain(), 1500);
+            retryUpdate(url, version);
         });
     });
 
     request.on("error", (err) => {
         console.error("Download request failed", err);
-        updateSplashStatus("Bağlantı hatası, uygulama açılıyor...");
-        setTimeout(() => closeSplashAndShowMain(), 1500);
+        retryUpdate(url, version);
     });
 
     request.end();
